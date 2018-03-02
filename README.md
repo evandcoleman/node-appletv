@@ -77,10 +77,10 @@ return scan()
 #### Connect to a paired Apple TV
 
 ```typescript
-import { scan, Credentials } from 'node-appletv';
+import { scan, parseCredentials } from 'node-appletv';
 
 // see example above for how to get the credentials string
-let credentials = Credentials.parse(credentialsString);
+let credentials = parseCredentials(credentialsString);
 
 return scan(uniqueIdentifier)
     .then(devices => {
