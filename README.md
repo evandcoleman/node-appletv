@@ -13,7 +13,7 @@
 
 ### As a standalone cli
 
-```
+```bash
 # Install
 $ npm install -g node-appletv
 
@@ -36,7 +36,7 @@ The `appletv` cli supports several commands, such as:
 
 ### As a node module
 
-```
+```bash
 $ npm install --save node-appletv
 ```
 
