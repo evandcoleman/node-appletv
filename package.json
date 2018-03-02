@@ -1,0 +1,39 @@
+{
+  "name": "node-appletv",
+  "version": "1.0.0",
+  "description": "A Node.js library for communicating with an Apple TV",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "prepublish": "npm run build",
+    "build": "npm run clean && tsc && cp -R ./src/lib/protos ./dist/lib/protos",
+    "clean": "rimraf dist"
+  },
+  "bin": {
+    "appletv": "bin/appletv"
+  },
+  "author": "Evan Coleman <e@edc.me> (https://edc.me)",
+  "license": "MIT",
+  "dependencies": {
+    "bplist-parser": "^0.1.1",
+    "camelcase": "^4.1.0",
+    "curve25519-n2": "^1.1.3",
+    "ed25519": "0.0.4",
+    "fast-srp-hap": "^1.0.1",
+    "google-protobuf": "^3.4.0",
+    "mdns": "^2.3.3",
+    "prompt": "^1.0.0",
+    "protobufjs": "^6.8.4",
+    "snake-case": "^2.1.0",
+    "sodium": "^2.0.1",
+    "uuid": "^3.2.1",
+    "varint": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/mdns": "0.0.32",
+    "@types/node": "^9.3.0",
+    "@types/uuid": "^3.4.3",
+    "rimraf": "^2.6.2",
+    "typescript": "^2.6.2"
+  }
+}

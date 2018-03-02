@@ -1,0 +1,7 @@
+syntax = "proto2";
+
+import "TransactionPacket.proto";
+
+message TransactionPackets {
+    repeated TransactionPacket packets = 1;
+}

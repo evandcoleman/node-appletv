@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+import "ProtocolMessage.proto";
+import "VirtualTouchEvent.proto";
+
+extend ProtocolMessage {
+  optional SendVirtualTouchEventMessage sendVirtualTouchEventMessage = 15;
+}
+
+message SendVirtualTouchEventMessage {
+  optional int32 deviceIdentifier = 1;
+  optional VirtualTouchEvent event = 2;
+}

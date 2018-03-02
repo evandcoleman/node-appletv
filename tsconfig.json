@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "commonjs",
+    "declaration": true,
+    "lib": [
+      "es2015.promise",
+      "es2017"
+    ],
+    "outDir": "./dist"
+  },
+  "include": [
+    "src/**/*"
+  ]
+}
