@@ -47,11 +47,9 @@ $ npm install --save node-appletv
 #### Scan for Apple TVs and pair
 
 ```typescript
-import { Browser, Pairing } from 'node-appletv';
+import { scan, Pairing } from 'node-appletv';
 
-let browser = new Browser();
-return browser
-    .scan()
+return scan()
     .then(devices => {
     	// devices is an array of AppleTV objects
     	let device = devices[0];
@@ -79,14 +77,12 @@ return browser
 #### Connect to a paired Apple TV
 
 ```typescript
-import { Browser, Credentials } from 'node-appletv';
+import { scan, Credentials } from 'node-appletv';
 
 // see example above for how to get the credentials string
 let credentials = Credentials.parse(credentialsString);
 
-let browser = new Browser();
-return browser
-    .scan(uniqueIdentifier)
+return scan(uniqueIdentifier)
     .then(devices => {
     	let device = devices[0];
     	return device
