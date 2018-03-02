@@ -28,7 +28,7 @@ cli
 cli
   .version('1.0.0')
   .command('command', 'Send a command to an AppleTV')
-  .argument('<command>', 'The command to send', /^up|down|left|right|menu|play|pause|next|previous$/)
+  .argument('<command>', 'The command to send', /^up|down|left|right|menu|play|pause|next|previous|suspend$/)
   .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
   .action((args, options, logger) => {
     if (!options.credentials) {

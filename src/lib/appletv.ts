@@ -183,6 +183,8 @@ export class AppleTV {
         return this.sendKeyPressAndRelease(12, 0xB5);
       case AppleTV.Key.Previous:
         return this.sendKeyPressAndRelease(12, 0xB6);
+      case AppleTV.Key.Suspend:
+        return this.sendKeyPressAndRelease(1, 0x82);
     }
   }
 
@@ -304,7 +306,8 @@ export module AppleTV {
     Play,
     Pause,
     Next,
-    Previous
+    Previous,
+    Suspend
   }
 
   /** Convert a string representation of a key to the correct enum type.
@@ -330,6 +333,8 @@ export module AppleTV {
       return AppleTV.Key.Next;
     } else if (string == "previous") {
       return AppleTV.Key.Previous;
+    } else if (string == "suspend") {
+      return AppleTV.Key.Suspend;
     }
   }
 }
