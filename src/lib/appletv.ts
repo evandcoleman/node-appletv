@@ -8,9 +8,14 @@ import { Pairing } from './pairing';
 import { Verifier } from './verifier';
 import { Credentials } from './credentials';
 import { NowPlayingInfo } from './now-playing-info';
-import { Notification } from './notification';
 import { Message } from './message';
 import number from './util/number';
+
+interface StateRequestCallback {
+  id: string
+  resolve: (any) => void
+  reject: (Error) => void
+}
 
 export class AppleTV {
   public name: string;
@@ -22,6 +27,7 @@ export class AppleTV {
 
   private connection: Connection;
   private stateCallbacks: Array<(Error, NowPlayingInfo) => void> = [];
+  private stateRequestCallbacks: StateRequestCallback[] = [];
 
   constructor(private service: Service, private log?: (string) => void) {
     this.log = log || ((text) => {});
@@ -62,7 +68,7 @@ export class AppleTV {
       var timestamp = 0;
       this.connection
         .messagesOfType("SetStateMessage", (error, message) => {
-          if (that.stateCallbacks.length == 0) { return; }
+          if (that.stateCallbacks.length == 0 && that.stateRequestCallbacks.length == 0) { return; }
           if (error) {
             that.stateCallbacks.forEach(cb => {
               cb(error, null);
@@ -73,6 +79,13 @@ export class AppleTV {
               timestamp = info.timestamp;
               that.stateCallbacks.forEach(cb => {
                 cb(null, info);
+              });
+            }
+            if (message.playbackQueue != null && message.playbackQueue.requestID != null) {
+              that.stateRequestCallbacks.forEach(cb => {
+                if (cb.id == message.playbackQueue.requestID) {
+                  cb.resolve(info);
+                }
               });
             }
           }
@@ -93,10 +106,10 @@ export class AppleTV {
               that.credentials.readKey = keys['readKey'];
               that.credentials.writeKey = keys['writeKey'];
               that.log("DEBUG: Keys Read=" + that.credentials.readKey.toString('hex') + ", Write=" + that.credentials.writeKey.toString('hex'));
-              return that.sendReadyState();
+              return that.sendConnectionState();
             });
         } else {
-          return that.sendReadyState();
+          return that.sendConnectionState();
         }
       })
       .then(() => {
@@ -129,21 +142,6 @@ export class AppleTV {
   }
 
   /**
-  * Observes notifications sent from the AppleTV.
-  * @param callback  The callback to send notifications to.
-  */
-  observeNotifications(callback: (Error, Notification) => void) {
-    this.connection
-      .messagesOfType("NotificationMessage", (error, message) => {
-        if (error) {
-          callback(error, null);
-        } else if (message) {
-          callback(null, new Notification(message));
-        }
-      });
-  }
-
-  /**
   * Observes all messages sent from the AppleTV.
   * @param callback  The callback to send messages to.
   */
@@ -155,6 +153,32 @@ export class AppleTV {
         } else if (message && type) {
           callback(null, new Message(type, message));
         }
+      });
+  }
+
+  /**
+  * Requests the current playback queue from the Apple TV.
+  * @returns A Promise that resolves to a NewPlayingInfo object.
+  */
+  requestPlaybackQueue(location: number = 0, length: number = 100): Promise<NowPlayingInfo> {
+    let that = this;
+    return load(path.resolve(__dirname + "/protos/PlaybackQueueRequestMessage.proto"))
+      .then(root => {
+        let type = root.lookupType('PlaybackQueueRequestMessage');
+        let message = type.create({
+          location: location,
+          length: length,
+          includeMetadata: true,
+          includeLanguageOptions: true,
+          includeLyrics: true,
+          requestID: uuid()
+        });
+
+        return that
+          .sendMessage(message)
+          .then(message => {
+            return new NowPlayingInfo(message);
+          });
       });
   }
 
@@ -257,11 +281,6 @@ export class AppleTV {
         return that
           .sendMessage(message);
       });
-  }
-
-  private sendReadyState(): Promise<ProtoMessage<{}>> {
-    return this.connection
-      .sendBlank("SET_READY_STATE_MESSAGE", this.credentials);
   }
 
   private sendClientUpdatesConfig(): Promise<ProtoMessage<{}>> {

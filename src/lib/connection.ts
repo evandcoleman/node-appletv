@@ -11,13 +11,15 @@ import { Credentials } from './credentials';
 import { AppleTV } from './appletv';
 import encryption from './util/encryption';
 
-class Callback {
-  constructor(public persist: boolean, public callback: (data: Buffer) => void) {}
+interface MessageCallback {
+  persist: boolean
+  responseType: string
+  callback: (data: Buffer) => void
 }
 
 export class Connection {
   private socket: Socket;
-  private callbacks: {} = {};
+  private callbacks = new Map<String, [MessageCallback]>();
   private rawMessageCallbacks: Array<(string, Buffer) => void> = [];
   private ProtocolMessage: Type;
   private buffer: Buffer = Buffer.alloc(0);
@@ -31,6 +33,7 @@ export class Connection {
   private waitForResponseMessageTypes: Array<number> = [
     3,
     15,
+    32,
     34
   ];
 
@@ -83,21 +86,27 @@ export class Connection {
   }
 
   private addCallback(identifier: string, persist: boolean, callback: (data: Buffer) => void) {
-    if (this.callbacks[identifier]) {
-      this.callbacks[identifier].push(new Callback(persist, callback));
+    if (this.callbacks.has(identifier)) {
+      this.callbacks.get(identifier).push(<MessageCallback>{
+        persist: persist,
+        callback: callback
+      });
     } else {
-      this.callbacks[identifier] = [new Callback(persist, callback)]
+      this.callbacks.set(identifier, [<MessageCallback>{
+        persist: persist,
+        callback: callback
+      }]);
     }
   }
 
   private executeCallbacks(identifier: string, data: Buffer): boolean {
-    let callbacks = this.callbacks[identifier];
+    let callbacks = this.callbacks.get(identifier);
     if (callbacks) {
       for (var i = 0; i < callbacks.length; i++) {
         let callback = callbacks[i];
         callback.callback(data);
         if (!callback.persist) {
-          this.callbacks[identifier].splice(i, 1);
+          this.callbacks.get(identifier).splice(i, 1);
         }
       }
       return true;
@@ -119,7 +128,7 @@ export class Connection {
       });
   }
 
-  messageOfType(messageType: string): Promise<{}> {
+  messageOfType(messageType: string): Promise<any> {
     let that = this;
     return new Promise<{}>((resolve, reject) => {
       that.messagesOfType(messageType, (error, message) => {
@@ -132,7 +141,7 @@ export class Connection {
     });
   }
 
-  messagesOfType(messageType: string, callback: (Error, {}) => void, persist?: boolean) {
+  messagesOfType(messageType: string, callback: (Error, any) => void, persist?: boolean) {
     let that = this;
     load(path.resolve(__dirname + "/protos/" + messageType + ".proto"), (error, root) => {
       if (error) {
@@ -156,7 +165,7 @@ export class Connection {
     });
   }
 
-  observeMessages(callback: (Error, string, {}) => void) {
+  observeMessages(callback: (Error, string, any) => void) {
     this.rawMessageCallbacks.push((identifier, data) => {
       load(path.resolve(__dirname + "/protos/" + identifier + ".proto"), (error, root) => {
         if (error) {
@@ -184,7 +193,7 @@ export class Connection {
           priority: 0
         });
 
-        return that.sendProtocolMessage(message,name, type, credentials);
+        return that.sendProtocolMessage(message, name, type, credentials);
       });
   }
 
@@ -214,10 +223,13 @@ export class Connection {
       if (waitForResponse) {
         let callback = (data: Buffer) => {
           try {
-            let message = ProtocolMessage.decode(data);
-            that.log("DEBUG: <<<< Received Protobuf=" + JSON.stringify(message.toJSON(), null, 2));
-            let key = "." + name.charAt(0).toLowerCase() + name.slice(1);
-            resolve(message[key]);
+            that.decodeMessage(data)
+              .then(message => {
+                resolve(message);
+              })
+              .catch(error => {
+                that.log(error);
+              });
           } catch(error) {
             that.log(error);
           }
@@ -253,5 +265,25 @@ export class Connection {
         resolve(message);
       }
     });
+  }
+
+  private decodeMessage(data: Buffer): Promise<Message<{}>> {
+    let that = this;
+    return load(path.resolve(__dirname + "/protos/ProtocolMessage.proto"))
+      .then(root => {
+        let ProtocolMessage = root.lookupType("ProtocolMessage");
+        let preMessage = ProtocolMessage.decode(data);
+        let type = preMessage.toJSON().type;
+        let name = type[0].toUpperCase() + camelcase(type).substring(1);
+
+        return load(path.resolve(__dirname + "/protos/" + name + ".proto"))
+          .then(root => {
+            let ProtocolMessage = root.lookupType("ProtocolMessage");
+            let message = ProtocolMessage.decode(data);
+            that.log("DEBUG: <<<< Received Protobuf=" + JSON.stringify(message.toJSON(), null, 2));
+            let key = "." + name.charAt(0).toLowerCase() + name.slice(1);
+            return message[key];
+          });
+      });
   }
 }

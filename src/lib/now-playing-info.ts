@@ -1,5 +1,4 @@
 
-
 export class NowPlayingInfo {
   public duration: number;
   public elapsedTime: number;
@@ -11,21 +10,21 @@ export class NowPlayingInfo {
   public playbackState: NowPlayingInfo.State;
   public timestamp: number;
 
-  constructor(message: {}) {
-    let nowPlayingInfo = message['nowPlayingInfo'];
+  constructor(public message: any) {
+    let nowPlayingInfo = message.nowPlayingInfo;
     if (nowPlayingInfo) {
-      this.duration = nowPlayingInfo['duration'];
-      this.elapsedTime = nowPlayingInfo['elapsedTime'];
-      this.title = nowPlayingInfo['title'];
-      this.artist = nowPlayingInfo['artist'];
-      this.album = nowPlayingInfo['album'];
-      this.timestamp = nowPlayingInfo['timestamp'];
+      this.duration = nowPlayingInfo.duration;
+      this.elapsedTime = nowPlayingInfo.elapsedTime;
+      this.title = nowPlayingInfo.title;
+      this.artist = nowPlayingInfo.artist;
+      this.album = nowPlayingInfo.album;
+      this.timestamp = nowPlayingInfo.timestamp;
     }
-    this.appDisplayName = message['displayName'];
-    this.appBundleIdentifier = message['displayID'];
-    if (message['playbackState'] == 2) {
+    this.appDisplayName = message.displayName;
+    this.appBundleIdentifier = message.displayID;
+    if (message.playbackState == 2) {
       this.playbackState = NowPlayingInfo.State.Paused;
-    } else {
+    } else if (message.playbackState == 1) {
       this.playbackState = NowPlayingInfo.State.Playing;
     }
   }

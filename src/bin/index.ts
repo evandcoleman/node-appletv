@@ -58,7 +58,7 @@ cli
 
 cli
   .version('1.0.0')
-  .command('state', 'Observes the playback state of the AppleTV')
+  .command('state', 'Request the playback state from the AppleTV')
   .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
   .action((args, options, logger) => {
     if (!options.credentials) {
@@ -72,14 +72,17 @@ cli
           .openConnection(credentials);
       })
       .then(device => {
-        device
-          .observeState((error, result) => {
-            if (error) {
-              logger.error(error.message);
-              logger.debug(error.stack);
-            } else {
-              logger.info(result);
-            }
+        device.requestPlaybackQueue()
+          .then(message => {
+            device
+              .observeState((error, result) => {
+                if (error) {
+                  logger.error(error.message);
+                  logger.debug(error.stack);
+                } else {
+                  logger.info(result);
+                }
+              });
           });
       })
       .catch(error => {
@@ -91,8 +94,10 @@ cli
 
 cli
   .version('1.0.0')
-  .command('notifications', 'Watch for notifications from the AppleTV')
+  .command('queue', 'Request the playback state from the AppleTV')
   .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
+  .option('--location <location>', 'The location in the queue', cli.INTEGER) 
+  .option('--length <length>', 'The length of the queue', cli.INTEGER) 
   .action((args, options, logger) => {
     if (!options.credentials) {
       logger.error("Credentials are required. Pair first.");
@@ -105,15 +110,11 @@ cli
           .openConnection(credentials);
       })
       .then(device => {
-        device
-          .observeNotifications((error, result) => {
-            if (error) {
-              logger.error(error.message);
-              logger.debug(error.stack);
-            } else {
-              logger.info(result);
-            }
-          });
+        return device
+          .requestPlaybackQueue(options.location, options.length);
+      })
+      .then(message => {
+        logger.info(message);
       })
       .catch(error => {
         logger.error(error.message);
@@ -144,8 +145,7 @@ cli
               logger.error(error.message);
               logger.debug(error.stack);
             } else {
-              logger.info(message.type);
-              // logger.info(JSON.stringify(message.toObject(), null, 2));
+              logger.info(JSON.stringify(message.toObject(), null, 2));
             }
           });
       })
