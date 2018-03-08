@@ -124,6 +124,15 @@ export class AppleTV {
   }
 
   /**
+  * Closes the connection to the Apple TV.
+  */
+  closeConnection() {
+    this.connection.close();
+    this.stateCallbacks = [];
+    this.stateRequestCallbacks = [];
+  }
+
+  /**
   * Send a Protobuf message to the AppleTV. This is for advanced usage only.
   * @param message  The Protobuf message to send.
   * @returns A promise that resolves to the response from the AppleTV.

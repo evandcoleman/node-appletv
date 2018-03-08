@@ -128,6 +128,10 @@ export class Connection {
       });
   }
 
+  close() {
+    this.socket.end();
+  }
+
   messageOfType(messageType: string): Promise<any> {
     let that = this;
     return new Promise<{}>((resolve, reject) => {
