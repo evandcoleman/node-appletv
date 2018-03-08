@@ -29,6 +29,8 @@ The `appletv` cli supports several commands, such as:
 
 `state`: Logs state changes from an Apple TV (now playing info)
 
+`queue`: Requests the current playback queue from an Apple TV
+
 `messages`: Logs all raw messages from an Apple TV
 
 `help <command>`: Get help for a specific command
