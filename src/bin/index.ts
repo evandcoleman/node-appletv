@@ -58,7 +58,7 @@ cli
 
 cli
   .version('1.0.0')
-  .command('state', 'Request the playback state from the AppleTV')
+  .command('state', 'Logs the playback state from the AppleTV')
   .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
   .action((args, options, logger) => {
     if (!options.credentials) {

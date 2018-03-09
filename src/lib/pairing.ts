@@ -5,7 +5,6 @@ import { load, Message } from 'protobufjs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import * as ed25519 from 'ed25519';
-import caporal from 'caporal';
 
 import { AppleTV } from './appletv';
 import { Credentials } from './credentials';

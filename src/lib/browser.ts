@@ -1,10 +1,10 @@
 import { EventEmitter } from 'events';
-import { Browser as MDNSBrowser, createBrowser, tcp } from 'mdns';
+import * as mdns from 'mdns';
 
 import { AppleTV } from './appletv';
 
 export class Browser {
-  private browser: MDNSBrowser;
+  private browser: mdns.Browser;
   private services: Array<AppleTV>;
   private uniqueIdentifier: string;
   private onComplete: (device: Array<AppleTV>) => void;
@@ -16,7 +16,12 @@ export class Browser {
   */
   constructor(log?: (string) => void) {
     let logFunc = log || ((text) => {});
-    this.browser = createBrowser(tcp('mediaremotetv'));
+    let sequence = [
+      mdns.rst.DNSServiceResolve(),
+      'DNSServiceGetAddrInfo' in (<any>mdns).dns_sd ? mdns.rst.DNSServiceGetAddrInfo() : mdns.rst.getaddrinfo({ families: [4] }),
+      mdns.rst.makeAddressesUnique()
+    ];
+    this.browser = mdns.createBrowser(mdns.tcp('mediaremotetv'));
     this.services = [];
 
     let that = this;

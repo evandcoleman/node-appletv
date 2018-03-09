@@ -20,7 +20,6 @@
     "curve25519-n2": "^1.1.3",
     "ed25519": "0.0.4",
     "fast-srp-hap": "^1.0.1",
-    "google-protobuf": "^3.4.0",
     "mdns": "^2.3.3",
     "prompt": "^1.0.0",
     "protobufjs": "^6.8.4",

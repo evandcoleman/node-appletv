@@ -1,5 +1,5 @@
 import { get as prompt } from 'prompt';
-import caporal from 'caporal';
+import * as caporal from 'caporal';
 
 import { AppleTV } from '../lib/appletv';
 import { Browser } from '../lib/browser';

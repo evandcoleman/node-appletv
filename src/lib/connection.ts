@@ -3,7 +3,6 @@ import { load, Type, Message, Enum } from 'protobufjs'
 import { v4 as uuid } from 'uuid';
 import * as path from 'path';
 import * as varint from 'varint';
-import caporal from 'caporal';
 import snake = require('snake-case');
 import camelcase = require('camelcase');
 
