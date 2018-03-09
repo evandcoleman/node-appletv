@@ -62,7 +62,7 @@ return scan()
     		})
     		.then(callback => {
     			// the pin is provided onscreen from the Apple TV
-    			callback(pin);
+    			return callback(pin);
     		});
     })
     .then(device => {
