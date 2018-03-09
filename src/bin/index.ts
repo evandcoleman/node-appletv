@@ -72,17 +72,14 @@ cli
           .openConnection(credentials);
       })
       .then(device => {
-        device.requestPlaybackQueue()
-          .then(message => {
-            device
-              .observeState((error, result) => {
-                if (error) {
-                  logger.error(error.message);
-                  logger.debug(error.stack);
-                } else {
-                  logger.info(result);
-                }
-              });
+        device
+          .observeState((error, result) => {
+            if (error) {
+              logger.error(error.message);
+              logger.debug(error.stack);
+            } else {
+              logger.info(result);
+            }
           });
       })
       .catch(error => {
