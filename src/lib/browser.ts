@@ -21,7 +21,7 @@ export class Browser {
       'DNSServiceGetAddrInfo' in (<any>mdns).dns_sd ? mdns.rst.DNSServiceGetAddrInfo() : mdns.rst.getaddrinfo({ families: [4] }),
       mdns.rst.makeAddressesUnique()
     ];
-    this.browser = mdns.createBrowser(mdns.tcp('mediaremotetv'));
+    this.browser = mdns.createBrowser(mdns.tcp('mediaremotetv'), { resolverSequence: sequence });
     this.services = [];
 
     let that = this;
