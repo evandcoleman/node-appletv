@@ -49,7 +49,7 @@ $ npm install --save node-appletv
 #### Scan for Apple TVs and pair
 
 ```typescript
-import { scan, Pairing } from 'node-appletv';
+import { scan } from 'node-appletv';
 
 return scan()
     .then(devices => {
@@ -57,9 +57,8 @@ return scan()
     	let device = devices[0];
     	return device
     		.openConnection()
-    		.then(() => {
-    			let pairing = new Pairing(device);
-    			return pairing.initiatePair();
+    		.then(device => {
+    			return device.pair();
     		})
     		.then(callback => {
     			// the pin is provided onscreen from the Apple TV
