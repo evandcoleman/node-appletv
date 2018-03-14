@@ -1,0 +1,10 @@
+syntax = "proto2";
+
+import "ContentItem.proto";
+import "PlayerPath.proto";
+
+message PlaybackQueue {
+  optional ContentItem contentItem = 2;
+  optional string requestID = 4;
+  optional PlayerPath playerPath = 5;
+}
