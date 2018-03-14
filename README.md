@@ -55,8 +55,7 @@ return scan()
     .then(devices => {
     	// devices is an array of AppleTV objects
     	let device = devices[0];
-    	return device
-    		.openConnection()
+    	return device.openConnection()
     		.then(device => {
     			return device.pair();
     		})
@@ -86,8 +85,7 @@ let credentials = parseCredentials(credentialsString);
 return scan(uniqueIdentifier)
     .then(devices => {
     	let device = devices[0];
-    	return device
-    		.openConnection(credentials);
+    	return device.openConnection(credentials);
     })
     .then(device => {
     	// you're connected!
@@ -102,6 +100,8 @@ return scan(uniqueIdentifier)
 ```
 
 The `uniqueIdentifier` is advertised by each Apple TV via Bonjour. Use an app like [Bonjour Browser](http://www.tildesoft.com) to find it. The identifier is also the first value in the string value of the `Credentials` object.
+
+See [homebridge-theater-mode](https://github.com/edc1591/homebridge-theater-mode) for a more practical use of this module.
 
 ## Development
 
