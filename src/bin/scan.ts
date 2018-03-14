@@ -5,7 +5,7 @@ import { AppleTV } from '../lib/appletv';
 import { Browser } from '../lib/browser';
 
 export function scan(logger: Logger, uniqueIdentifier?: string): Promise<AppleTV> {
-  let browser = new Browser(logger.debug);
+  let browser = new Browser();
   return browser
     .scan(uniqueIdentifier)
     .then(devices => {

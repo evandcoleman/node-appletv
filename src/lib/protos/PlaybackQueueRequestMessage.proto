@@ -10,6 +10,8 @@ message PlaybackQueueRequestMessage {
   required int32 location = 1;
   required int32 length = 2;
   optional bool includeMetadata = 3;
+  optional double artworkWidth = 4;
+  optional double artworkHeight = 5;
   optional bool includeLanguageOptions = 9;
   required string requestID = 11;
 }

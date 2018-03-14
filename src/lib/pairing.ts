@@ -17,7 +17,6 @@ export class Pairing {
   private key: Buffer = crypto.randomBytes(32);
   private publicKey: Buffer;
   private proof: Buffer;
-  private private
 
   private deviceSalt: Buffer;
   private devicePublicKey: Buffer;
@@ -29,10 +28,9 @@ export class Pairing {
 
   /**
   * Initiates the pairing process
-  * @param log  An optional function that takes in a string to provide verbose logging.
   * @returns A promise that resolves to a callback which takes in the pairing pin from the Apple TV.
   */
-  initiatePair(log?: (string) => void): Promise<(pin: string) => Promise<AppleTV>> {
+  initiatePair(): Promise<(pin: string) => Promise<AppleTV>> {
     let that = this;
     return load(path.resolve(__dirname + "/protos/CryptoPairingMessage.proto"))
       .then(root => {
@@ -63,12 +61,12 @@ export class Pairing {
         }
 
         return Promise.resolve((pin: string) => {
-          return that.completePairing(log, pin);
+          return that.completePairing(pin);
         });
       });
   }
 
-  private completePairing(log: (string) => void, pin: string): Promise<AppleTV> {
+  private completePairing(pin: string): Promise<AppleTV> {
     this.srp = srp.Client(
       srp.params['3072'],
       this.deviceSalt,
@@ -80,7 +78,7 @@ export class Pairing {
     this.publicKey = this.srp.computeA();
     this.proof = this.srp.computeM1();
 
-    log("DEBUG: Client Public Key=" + this.publicKey.toString('hex') + "\nProof=" + this.proof.toString('hex'));
+    // console.log("DEBUG: Client Public Key=" + this.publicKey.toString('hex') + "\nProof=" + this.proof.toString('hex'));
 
     let that = this;
     return load(path.resolve(__dirname + "/protos/CryptoPairingMessage.proto"))
@@ -101,7 +99,7 @@ export class Pairing {
           .then(message => {
             let pairingData = message["pairingData"];
             that.deviceProof = tlv.decode(pairingData)[tlv.Tag.Proof];
-            log("DEBUG: Device Proof=" + that.deviceProof.toString('hex'));
+            // console.log("DEBUG: Device Proof=" + that.deviceProof.toString('hex'));
 
             that.srp.checkM2(that.deviceProof);
 
@@ -134,7 +132,7 @@ export class Pairing {
               tlv.Tag.Signature, deviceSignature
             );
             let encryptedTLV = Buffer.concat(enc.encryptAndSeal(tlvData, null, Buffer.from('PS-Msg05'), encryptionKey));
-            log("DEBUG: Encrypted Data=" + encryptedTLV.toString('hex'));
+            // console.log("DEBUG: Encrypted Data=" + encryptedTLV.toString('hex'));
             let outerTLV = tlv.encode(
               tlv.Tag.Sequence, 0x05,
               tlv.Tag.EncryptedData, encryptedTLV

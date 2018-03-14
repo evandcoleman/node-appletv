@@ -5,17 +5,16 @@ import { AppleTV } from './appletv';
 
 export class Browser {
   private browser: mdns.Browser;
-  private services: Array<AppleTV>;
+  private services: AppleTV[];
   private uniqueIdentifier: string;
-  private onComplete: (device: Array<AppleTV>) => void;
+  private onComplete: (device: AppleTV[]) => void;
   private onFailure: (error: Error) => void;
 
   /**
   * Creates a new Browser
   * @param log  An optional function that takes a string to provide verbose logging.
   */
-  constructor(log?: (string) => void) {
-    let logFunc = log || ((text) => {});
+  constructor() {
     let sequence = [
       mdns.rst.DNSServiceResolve(),
       'DNSServiceGetAddrInfo' in (<any>mdns).dns_sd ? mdns.rst.DNSServiceGetAddrInfo() : mdns.rst.getaddrinfo({ families: [4] }),
@@ -26,7 +25,7 @@ export class Browser {
 
     let that = this;
     this.browser.on('serviceUp', function(service) {
-      let device = new AppleTV(service, logFunc);
+      let device = new AppleTV(service);
       if (that.uniqueIdentifier && device.uid == that.uniqueIdentifier) {
         that.browser.stop();
         that.onComplete([device]);
@@ -42,12 +41,12 @@ export class Browser {
   * @param timeout  An optional timeout value (in seconds) to give up the search after.
   * @returns A promise that resolves to an array of AppleTV objects. If you provide a `uniqueIdentifier` the array is guaranteed to only contain one object.
   */
-  scan(uniqueIdentifier?: string, timeout?: number): Promise<Array<AppleTV>> {
+  scan(uniqueIdentifier?: string, timeout?: number): Promise<AppleTV[]> {
     this.services = [];
     this.uniqueIdentifier = uniqueIdentifier;
     this.browser.start();
     let that = this;
-    let to = timeout == null ? 3 : timeout;
+    let to = timeout == null ? 5 : timeout;
 
     return new Promise((resolve, reject) => {
       that.onComplete = resolve;

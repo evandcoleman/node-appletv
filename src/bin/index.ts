@@ -3,6 +3,8 @@ let cli = caporal as any;
 
 import { AppleTV } from '../lib/appletv';
 import { Credentials } from '../lib/credentials';
+import { NowPlayingInfo } from '../lib/now-playing-info';
+import { Message } from '../lib/message';
 import { scan } from './scan';
 import { pair } from './pair';
 
@@ -12,6 +14,13 @@ cli
   .action((args, options, logger) => {
     scan(logger)
       .then(device => {
+        device.on('debug', (message: string) => {
+          logger.debug(message);
+        });
+        device.on('error', (error: Error) => {
+          logger.error(error.message);
+          logger.debug(error.stack);
+        });
         return pair(device, logger)
           .then(keys => {
             logger.info("Success! Credentials: " + device.credentials.toString());
@@ -38,6 +47,13 @@ cli
     let credentials = Credentials.parse(options.credentials);
     scan(logger, credentials.uniqueIdentifier)
       .then(device => {
+        device.on('debug', (message: string) => {
+          logger.debug(message);
+        });
+        device.on('error', (error: Error) => {
+          logger.error(error.message);
+          logger.debug(error.stack);
+        });
         return device
           .openConnection(credentials)
           .then(() => {
@@ -68,19 +84,54 @@ cli
     let credentials = Credentials.parse(options.credentials);
     scan(logger, credentials.uniqueIdentifier)
       .then(device => {
+        device.on('debug', (message: string) => {
+          logger.debug(message);
+        });
+        device.on('error', (error: Error) => {
+          logger.error(error.message);
+          logger.debug(error.stack);
+        });
         return device
           .openConnection(credentials);
       })
       .then(device => {
-        device
-          .observeState((error, result) => {
-            if (error) {
-              logger.error(error.message);
-              logger.debug(error.stack);
-            } else {
-              logger.info(result);
-            }
-          });
+        device.on('nowPlaying', (info: NowPlayingInfo) => {
+          logger.info(info.toString());
+        });
+      })
+      .catch(error => {
+        logger.error(error.message);
+        logger.debug(error.stack);
+        process.exit();
+      });
+  });
+
+cli
+  .version('1.0.0')
+  .command('supportedCommands', 'Logs the playback state from the AppleTV')
+  .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
+  .action((args, options, logger) => {
+    if (!options.credentials) {
+      logger.error("Credentials are required. Pair first.");
+      process.exit();
+    }
+    let credentials = Credentials.parse(options.credentials);
+    scan(logger, credentials.uniqueIdentifier)
+      .then(device => {
+        device.on('debug', (message: string) => {
+          logger.debug(message);
+        });
+        device.on('error', (error: Error) => {
+          logger.error(error.message);
+          logger.debug(error.stack);
+        });
+        return device
+          .openConnection(credentials);
+      })
+      .then(device => {
+        device.on('supportedCommands', (info: any[]) => {
+          logger.info(info);
+        });
       })
       .catch(error => {
         logger.error(error.message);
@@ -95,6 +146,9 @@ cli
   .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
   .option('--location <location>', 'The location in the queue', cli.INTEGER) 
   .option('--length <length>', 'The length of the queue', cli.INTEGER) 
+  .option('--metadata', 'Include metadata', cli.BOOLEAN) 
+  .option('--lyrics', 'Include lyrics', cli.BOOLEAN) 
+  .option('--languages', 'Include language options', cli.BOOLEAN) 
   .action((args, options, logger) => {
     if (!options.credentials) {
       logger.error("Credentials are required. Pair first.");
@@ -103,12 +157,25 @@ cli
     let credentials = Credentials.parse(options.credentials);
     scan(logger, credentials.uniqueIdentifier)
       .then(device => {
+        device.on('debug', (message: string) => {
+          logger.debug(message);
+        });
+        device.on('error', (error: Error) => {
+          logger.error(error.message);
+          logger.debug(error.stack);
+        });
         return device
           .openConnection(credentials);
       })
       .then(device => {
         return device
-          .requestPlaybackQueue(options.location, options.length);
+          .requestPlaybackQueue({
+            location: options.location || 0,
+            length: options.length || 1,
+            includeMetadata: options.metadata,
+            includeLyrics: options.lyrics,
+            includeLanguageOptions: options.languages
+          });
       })
       .then(message => {
         logger.info(message);
@@ -132,19 +199,20 @@ cli
     let credentials = Credentials.parse(options.credentials);
     scan(logger, credentials.uniqueIdentifier)
       .then(device => {
+        device.on('debug', (message: string) => {
+          logger.debug(message);
+        });
+        device.on('error', (error: Error) => {
+          logger.error(error.message);
+          logger.debug(error.stack);
+        });
         return device
           .openConnection(credentials);
       })
       .then(device => {
-        device
-          .observeMessages((error, message) => {
-            if (error) {
-              logger.error(error.message);
-              logger.debug(error.stack);
-            } else {
-              logger.info(JSON.stringify(message.toObject(), null, 2));
-            }
-          });
+        device.on('message', (message: Message) => {
+          logger.info(JSON.stringify(message.toObject(), null, 2));
+        });
       })
       .catch(error => {
         logger.error(error.message);

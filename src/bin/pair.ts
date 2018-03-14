@@ -12,7 +12,7 @@ export function pair(device: AppleTV, logger: Logger): Promise<AppleTV> {
     .then(() => {
       let pairing = new Pairing(device);
       
-      return pairing.initiatePair(logger.debug)
+      return pairing.initiatePair()
         .then(callback => {
           return new Promise<string>((resolve, reject) => {
             prompt(['PIN'], (error, result) => {

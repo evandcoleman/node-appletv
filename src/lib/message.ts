@@ -1,15 +1,14 @@
 
 
 export class Message {
-  public type: string;
-  private object: {};
+  public payload: any;
 
-  constructor(type: string, message: {}) {
-    this.type = type;
-    this.object = message;
+  constructor(public type: string, private message: any) {
+    let key = "." + type.charAt(0).toLowerCase() + type.slice(1);
+    this.payload = message[key];
   }
 
-  toObject(): {} {
-    return this.object;
+  toObject(): any {
+    return this.message;
   }
 }

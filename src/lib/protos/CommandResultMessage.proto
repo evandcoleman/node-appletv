@@ -3,9 +3,9 @@ syntax = "proto2";
 import "ProtocolMessage.proto";
 
 extend ProtocolMessage {
-  optional SendCommandResultMessage commandResultMessage = 7;
+  optional CommandResultMessage commandResultMessage = 7;
 }
 
-message SendCommandResultMessage {
+message CommandResultMessage {
   optional uint64 value = 1;
 }

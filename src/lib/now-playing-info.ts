@@ -1,4 +1,3 @@
-
 export class NowPlayingInfo {
   public duration: number;
   public elapsedTime: number;
@@ -26,6 +25,21 @@ export class NowPlayingInfo {
       this.playbackState = NowPlayingInfo.State.Paused;
     } else if (message.playbackState == 1) {
       this.playbackState = NowPlayingInfo.State.Playing;
+    }
+  }
+
+  public toString(): string {
+    if (this.artist) {
+      return this.title + " by " + this.artist + " (" + this.elapsedTime + "/" + this.duration + ") | "
+        + this.appDisplayName + " (" + this.appBundleIdentifier + ") | "
+        + this.playbackState; 
+    } else if (this.title) {
+      return this.title + " (" + this.elapsedTime + "/" + this.duration + ") | "
+        + this.appDisplayName + " (" + this.appBundleIdentifier + ") | "
+        + this.playbackState; 
+    } else {
+      return this.appDisplayName + " (" + this.appBundleIdentifier + ") | "
+        + this.playbackState; 
     }
   }
 }

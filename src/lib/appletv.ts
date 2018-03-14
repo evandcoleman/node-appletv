@@ -8,16 +8,32 @@ import { Pairing } from './pairing';
 import { Verifier } from './verifier';
 import { Credentials } from './credentials';
 import { NowPlayingInfo } from './now-playing-info';
+import { SupportedCommand } from './supported-command';
+import TypedEventEmitter from './typed-events';
 import { Message } from './message';
 import number from './util/number';
 
 interface StateRequestCallback {
-  id: string
-  resolve: (any) => void
-  reject: (Error) => void
+  id: string;
+  resolve: (any) => void;
+  reject: (Error) => void;
 }
 
-export class AppleTV {
+export interface Size {
+  width: number;
+  height: number;
+}
+
+export interface PlaybackQueueRequestOptions {
+  location: number;
+  length: number;
+  includeMetadata?: boolean;
+  includeLanguageOptions?: boolean;
+  includeLyrics?: boolean;
+  artworkSize?: Size;
+}
+
+export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
   public name: string;
   public address: string;
   public port: number;
@@ -26,11 +42,10 @@ export class AppleTV {
   public credentials: Credentials;
 
   private connection: Connection;
-  private stateCallbacks: Array<(Error, NowPlayingInfo) => void> = [];
-  private stateRequestCallbacks: StateRequestCallback[] = [];
 
-  constructor(private service: Service, private log?: (string) => void) {
-    this.log = log || ((text) => {});
+  constructor(private service: Service) {
+    super();
+
     this.service = service;
     this.name = service.txtRecord.Name;
     if (service.addresses.length > 1) {
@@ -40,18 +55,80 @@ export class AppleTV {
     }
     this.port = service.port;
     this.uid = service.txtRecord.UniqueIdentifier;
-    this.connection = new Connection(this, this.log);
+    this.connection = new Connection(this);
+
+    let that = this;
+    this.connection.on('message', (message: Message) => {
+      that.emit('message', message);
+      if (message.type == "SetStateMessage") {
+        if (message.payload == null) {
+          that.emit('nowPlaying', null);
+          return;
+        }
+        if (message.payload.nowPlayingInfo) {
+          let info = new NowPlayingInfo(message.payload);
+          that.emit('nowPlaying', info);
+        }
+        if (message.payload.supportedCommands) {
+          let commands = (message.payload.supportedCommands.supportedCommands || [])
+            .map(sc => {
+              return new SupportedCommand(sc.command, sc.enabled || false, sc.canScrub || false);
+            });
+          that.emit('supportedCommands', commands);
+        }
+        if (message.payload.playbackQueue) {
+          that.emit('playbackQueue', message.payload.playbackQueue);
+        }
+      }
+    })
+    .on('connect', () => {
+      that.emit('connect');
+    })
+    .on('close', () => {
+      that.emit('close');
+    })
+    .on('error', (error) => {
+      that.emit('error', error);
+    })
+    .on('debug', (message) => {
+      that.emit('debug', message);
+    });
+
+    var queuePollTimer = null;
+    this._on('newListener', (event, listener) => {
+      if (queuePollTimer == null && (event == 'nowPlaying' || event == 'supportedCommands')) {
+        queuePollTimer = setInterval(() => {
+          if (that.connection.isOpen) {
+            that.requestPlaybackQueueWithWait({
+              length: 1,
+              location: 0,
+              artworkSize: {
+                width: -1,
+                height: 368
+              }
+            }, false).then(() => {}).catch(error => {});
+          }
+        }, 2000);
+      }
+    });
+    this._on('removeListener', (event, listener) => {
+      if (queuePollTimer != null && (event == 'nowPlaying' || event == 'supportedCommands')) {
+        let listenerCount = that.listenerCount('nowPlaying') + that.listenerCount('supportedCommands');
+        if (listenerCount == 0) {
+          clearInterval(queuePollTimer);
+          queuePollTimer = null;
+        }
+      }
+    });
   }
 
   /**
   * Pair with an already discovered AppleTV.
-  * @param log  An optional function to log debug information.
   * @returns A promise that resolves to the AppleTV object.
   */
-  pair(log?: (string) => void): Promise<(pin: string) => Promise<AppleTV>> {
-    let logFunc = log || ((text) => {});
+  pair(): Promise<(pin: string) => Promise<AppleTV>> {
     let pairing = new Pairing(this);
-    return pairing.initiatePair(logFunc);
+    return pairing.initiatePair();
   }
 
   /**
@@ -63,33 +140,7 @@ export class AppleTV {
     let that = this;
 
     if (credentials) {
-      this.pairingId = credentials.pairingId;
-
-      var timestamp = 0;
-      this.connection
-        .messagesOfType("SetStateMessage", (error, message) => {
-          if (that.stateCallbacks.length == 0 && that.stateRequestCallbacks.length == 0) { return; }
-          if (error) {
-            that.stateCallbacks.forEach(cb => {
-              cb(error, null);
-            });
-          } else if (message) {
-            let info = new NowPlayingInfo(message);
-            if (info.timestamp >= timestamp) {
-              timestamp = info.timestamp;
-              that.stateCallbacks.forEach(cb => {
-                cb(null, info);
-              });
-            }
-            if (message.playbackQueue != null && message.playbackQueue.requestID != null) {
-              that.stateRequestCallbacks.forEach(cb => {
-                if (cb.id == message.playbackQueue.requestID) {
-                  cb.resolve(info);
-                }
-              });
-            }
-          }
-        });
+      this.pairingId = credentials.pairingId;      
     }
     
     return this.connection
@@ -105,7 +156,7 @@ export class AppleTV {
             .then(keys => {
               that.credentials.readKey = keys['readKey'];
               that.credentials.writeKey = keys['writeKey'];
-              that.log("DEBUG: Keys Read=" + that.credentials.readKey.toString('hex') + ", Write=" + that.credentials.writeKey.toString('hex'));
+              that.emit('debug', "DEBUG: Keys Read=" + that.credentials.readKey.toString('hex') + ", Write=" + that.credentials.writeKey.toString('hex'));
               return that.sendConnectionState();
             });
         } else {
@@ -114,9 +165,6 @@ export class AppleTV {
       })
       .then(() => {
         return that.sendClientUpdatesConfig();
-      })
-      .then(() => {
-        return that.sendWakeDevice();
       })
       .then(() => {
         return Promise.resolve(that);
@@ -128,8 +176,6 @@ export class AppleTV {
   */
   closeConnection() {
     this.connection.close();
-    this.stateCallbacks = [];
-    this.stateRequestCallbacks = [];
   }
 
   /**
@@ -137,63 +183,23 @@ export class AppleTV {
   * @param message  The Protobuf message to send.
   * @returns A promise that resolves to the response from the AppleTV.
   */
-  sendMessage(message: ProtoMessage<{}>): Promise<ProtoMessage<{}>> {
+  sendMessage(message: ProtoMessage<{}>, waitForResponse: boolean = true): Promise<ProtoMessage<{}>> {
     return this.connection
-      .send(message, this.credentials);
-  }
-
-  /**
-  * Observes the now playing state of the AppleTV.
-  * @param callback  The callback to send updates to.
-  */
-  observeState(callback: (Error, NowPlayingInfo) => void) {
-    this.stateCallbacks.push(callback);
-  }
-
-  /**
-  * Observes all messages sent from the AppleTV.
-  * @param callback  The callback to send messages to.
-  */
-  observeMessages(callback: (Error, Message) => void) {
-    this.connection
-      .observeMessages((error, type, message) => {
-        if (error) {
-          callback(error, null);
-        } else if (message && type) {
-          callback(null, new Message(type, message));
-        }
-      });
+      .send(message, waitForResponse, this.credentials);
   }
 
   /**
   * Requests the current playback queue from the Apple TV.
+  * @param options Options to send
   * @returns A Promise that resolves to a NewPlayingInfo object.
   */
-  requestPlaybackQueue(location: number = 0, length: number = 100): Promise<NowPlayingInfo> {
-    let that = this;
-    return load(path.resolve(__dirname + "/protos/PlaybackQueueRequestMessage.proto"))
-      .then(root => {
-        let type = root.lookupType('PlaybackQueueRequestMessage');
-        let message = type.create({
-          location: location,
-          length: length,
-          includeMetadata: true,
-          includeLanguageOptions: true,
-          includeLyrics: true,
-          requestID: uuid()
-        });
-
-        return that
-          .sendMessage(message)
-          .then(message => {
-            return new NowPlayingInfo(message);
-          });
-      });
+  requestPlaybackQueue(options: PlaybackQueueRequestOptions): Promise<NowPlayingInfo> {
+    return this.requestPlaybackQueueWithWait(options, true);
   }
 
   /**
   * Send a key command to the AppleTV.
-  * @param The key to press.
+  * @param key The key to press.
   * @returns A promise that resolves to the AppleTV object after the message has been sent.
   */
   sendKeyCommand(key: AppleTV.Key): Promise<AppleTV> {
@@ -253,6 +259,28 @@ export class AppleTV {
         return that.sendMessage(message)
           .then(() => {
             return that;
+          });
+      });
+  }
+
+  private requestPlaybackQueueWithWait(options: PlaybackQueueRequestOptions, waitForResponse: boolean): Promise<any> {
+    let that = this;
+    return load(path.resolve(__dirname + "/protos/PlaybackQueueRequestMessage.proto"))
+      .then(root => {
+        let type = root.lookupType('PlaybackQueueRequestMessage');
+        var params: any = options;
+        params.requestID = uuid();
+        if (options.artworkSize) {
+          params.artworkWidth = options.artworkSize.width;
+          params.artworkHeight = options.artworkSize.height;
+          delete params.artworkSize;
+        }
+        let message = type.create(params);
+
+        return that
+          .sendMessage(message)
+          .then(message => {
+            return message;
           });
       });
   }
@@ -319,6 +347,19 @@ export class AppleTV {
         return that
           .sendMessage(message);
       });
+  }
+}
+
+export module AppleTV {
+  export interface Events {
+    connect: void;
+    nowPlaying: NowPlayingInfo;
+    supportedCommands: SupportedCommand[];
+    playbackQueue: any;
+    message: Message
+    close: void;
+    error: Error;
+    debug: string;
   }
 }
 
