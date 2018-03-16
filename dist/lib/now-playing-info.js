@@ -21,14 +21,20 @@ class NowPlayingInfo {
             this.playbackState = NowPlayingInfo.State.Playing;
         }
     }
+    percentCompleted() {
+        if (!this.elapsedTime || !this.duration) {
+            return 0;
+        }
+        return Math.floor((this.elapsedTime / this.duration) * 100);
+    }
     toString() {
         if (this.artist) {
-            return this.title + " by " + this.artist + " (" + this.elapsedTime + "/" + this.duration + ") | "
+            return this.title + " by " + this.artist + " (" + this.percentCompleted() + ") | "
                 + this.appDisplayName + " (" + this.appBundleIdentifier + ") | "
                 + this.playbackState;
         }
         else if (this.title) {
-            return this.title + " (" + this.elapsedTime + "/" + this.duration + ") | "
+            return this.title + " (" + this.percentCompleted() + ") | "
                 + this.appDisplayName + " (" + this.appBundleIdentifier + ") | "
                 + this.playbackState;
         }

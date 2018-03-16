@@ -10,6 +10,7 @@ export declare class NowPlayingInfo {
     playbackState: NowPlayingInfo.State;
     timestamp: number;
     constructor(message: any);
+    percentCompleted(): number;
     toString(): string;
 }
 export declare module NowPlayingInfo {
