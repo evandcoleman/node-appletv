@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const events_1 = require("events");
 class TypedEventEmitter extends events_1.EventEmitter {
     constructor(...args) {
-        super(...args);
+        super();
     }
     _on(event, callback) {
         return super.on(event, callback);
