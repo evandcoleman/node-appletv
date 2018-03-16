@@ -36,7 +36,8 @@ export class NowPlayingInfo {
 
   public toString(): string {
     if (this.artist) {
-      return this.title + " by " + this.artist + " (" + this.percentCompleted() + "%) | "
+      let album = this.album == null ? '' : " -- " + this.album + " ";
+      return this.title + " by " + this.artist + album + " (" + this.percentCompleted() + "%) | "
         + this.appDisplayName + " (" + this.appBundleIdentifier + ") | "
         + this.playbackState; 
     } else if (this.title) {
