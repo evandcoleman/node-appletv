@@ -1,4 +1,4 @@
-import { load, Message } from 'protobufjs';
+import { load } from 'protobufjs';
 import * as path from 'path';
 import * as ed25519 from 'ed25519';
 import * as crypto from 'crypto';
@@ -7,6 +7,7 @@ import * as curve25519 from 'curve25519-n2';
 
 import { AppleTV } from './appletv';
 import { Credentials } from './credentials';
+import { Message } from './message';
 import tlv from './util/tlv';
 import enc from './util/encryption';
 
@@ -34,9 +35,12 @@ export class Verifier {
         });
 
         return that.device
-          .sendMessage(message)
+          .sendMessage(message, false)
+          .then(() => {
+            return that.waitForSequence(0x02);
+          })
           .then(message => {
-            let pairingData = message['pairingData'];
+            let pairingData = message.payload.pairingData;
             let tlvData = tlv.decode(pairingData);
             let sessionPublicKey = tlvData[tlv.Tag.PublicKey];
             let encryptedData = tlvData[tlv.Tag.EncryptedData];
@@ -87,8 +91,11 @@ export class Verifier {
             });
 
             return that.device
-              .sendMessage(newMessage)
-              .then(message => {
+              .sendMessage(newMessage, false)
+              .then(() => {
+                return that.waitForSequence(0x04);
+              })
+              .then(() => {
                 let readKey = enc.HKDF(
                   "sha512",
                   Buffer.from("MediaRemote-Salt"),
@@ -104,12 +111,37 @@ export class Verifier {
                   32
                 );
 
-                return Promise.resolve({
+                return {
                   readKey: readKey,
                   writeKey: writeKey
-                });
+                };
               });
           });
       });
+  }
+
+  private waitForSequence(sequence: number, timeout: number = 3): Promise<Message> {
+    let that = this;
+    let handler = (message: Message, resolve: any) => {
+      let tlvData = tlv.decode(message.payload.pairingData);
+      if (Buffer.from([sequence]).equals(tlvData[tlv.Tag.Sequence])) {
+        resolve(message);
+      }
+    };
+
+    return new Promise<Message>((resolve, reject) => {
+      that.device.on('message', (message: Message) => {
+        if (message.type == Message.Type.CryptoPairingMessage) {
+          handler(message, resolve);
+        }
+      });
+      setTimeout(() => {
+        reject(new Error("Timed out waiting for crypto sequence " + sequence));
+      }, timeout * 1000);
+    })
+    .then(value => {
+      that.device.removeListener('message', handler);
+      return value;
+    });
   }
 }

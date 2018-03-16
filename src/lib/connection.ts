@@ -14,7 +14,7 @@ import { Message } from './message';
 
 interface MessageCallback {
   responseType: string
-  callback: (data: Buffer) => void
+  callback: (message: Message) => void
 }
 
 export class Connection extends TypedEventEmitter<Connection.Events> {
@@ -23,19 +23,6 @@ export class Connection extends TypedEventEmitter<Connection.Events> {
   private callbacks = new Map<String, [MessageCallback]>();
   private ProtocolMessage: Type;
   private buffer: Buffer = Buffer.alloc(0);
-
-  private unidentifiableMessageTypes: Array<number> = [
-    4,
-    5,
-    34
-  ];
-
-  private waitForResponseMessageTypes: Array<number> = [
-    3,
-    15,
-    32,
-    34
-  ];
 
   constructor(public device: AppleTV) {
     super();
@@ -61,27 +48,16 @@ export class Connection extends TypedEventEmitter<Connection.Events> {
           messageBytes = device.credentials.decrypt(messageBytes);
           that.emit('debug', "DEBUG: Decrypted Data=" + messageBytes.toString('hex'));
         }
-        let message = that.ProtocolMessage.decode(messageBytes);
-        let types = that.ProtocolMessage.lookupEnum("Type");
-        let name = types.valuesById[message["type"]];
-        let identifier = message["identifier"] || "type_" + name;
-        if (!that.executeCallbacks(identifier, messageBytes)) {
-          that.emit('debug', "DEBUG: <<<< Received Protobuf=" + JSON.stringify(that.decodeMessage(messageBytes), null, 2))
-        }
-        if (name) {
-          let id = camelcase(name);
-          let fixedId = id.charAt(0).toUpperCase() + id.slice(1);
-          load(path.resolve(__dirname + "/protos/" + fixedId + ".proto"), (error, root) => {
-            if (error) {
-              that.emit('error', error);
-            } else {
-              let type = root.lookupType(fixedId);
-              let ProtocolMessage = type.parent['ProtocolMessage'];
-              let message = new Message(fixedId, ProtocolMessage.decode(messageBytes).toJSON());
-              that.emit('message', message);
-            }
+        
+        that.decodeMessage(messageBytes)
+          .then(protoMessage => {
+            let message = new Message(protoMessage);
+            that.emit('message', message);
+            that.executeCallbacks(message.identifier, message);
+          })
+          .catch(error => {
+            that.emit('error', error);
           });
-        }
       } catch(error) {
         that.emit('error', error);
       }
@@ -102,7 +78,7 @@ export class Connection extends TypedEventEmitter<Connection.Events> {
     });
   }
 
-  private addCallback(identifier: string, callback: (data: Buffer) => void) {
+  private addCallback(identifier: string, callback: (message: Message) => void) {
     if (this.callbacks.has(identifier)) {
       this.callbacks.get(identifier).push(<MessageCallback>{
         callback: callback
@@ -114,12 +90,12 @@ export class Connection extends TypedEventEmitter<Connection.Events> {
     }
   }
 
-  private executeCallbacks(identifier: string, data: Buffer): boolean {
+  private executeCallbacks(identifier: string, message: Message): boolean {
     let callbacks = this.callbacks.get(identifier);
     if (callbacks) {
       for (var i = 0; i < callbacks.length; i++) {
         let callback = callbacks[i];
-        callback.callback(data);
+        callback.callback(message);
         this.callbacks.get(identifier).splice(i, 1);
       }
       return true;
@@ -145,7 +121,7 @@ export class Connection extends TypedEventEmitter<Connection.Events> {
     this.socket.end();
   }
 
-  sendBlank(typeName: string, waitForResponse: boolean, credentials?: Credentials): Promise<ProtoMessage<{}>> {
+  sendBlank(typeName: string, waitForResponse: boolean, credentials?: Credentials): Promise<Message> {
     let that = this;
     return load(path.resolve(__dirname + "/protos/ProtocolMessage.proto"))
       .then(root => {
@@ -162,7 +138,7 @@ export class Connection extends TypedEventEmitter<Connection.Events> {
       });
   }
 
-  send(message: ProtoMessage<{}>, waitForResponse: boolean, credentials?: Credentials): Promise<ProtoMessage<{}>> {
+  send(message: ProtoMessage<{}>, waitForResponse: boolean, credentials?: Credentials): Promise<Message> {
     let ProtocolMessage = message.$type.parent['ProtocolMessage'];
     let types = ProtocolMessage.lookupEnum("Type");
     let name = message.$type.name;
@@ -180,33 +156,18 @@ export class Connection extends TypedEventEmitter<Connection.Events> {
     return this.sendProtocolMessage(outerMessage, name, type, waitForResponse, credentials);
   }
 
-  private sendProtocolMessage(message: ProtoMessage<{}>, name: string, type: number, waitForResponse: boolean, credentials?: Credentials): Promise<ProtoMessage<{}>> {
+  private sendProtocolMessage(message: ProtoMessage<{}>, name: string, type: number, waitForResponse: boolean, credentials?: Credentials): Promise<Message> {
     let that = this;
-    return new Promise<ProtoMessage<{}>>((resolve, reject) => {
+    return new Promise<Message>((resolve, reject) => {
       let ProtocolMessage: any = message.$type;
-      let shouldWaitForResponse = that.waitForResponseMessageTypes.indexOf(type) > -1 && waitForResponse;
-      if (that.unidentifiableMessageTypes.indexOf(type) == -1 && shouldWaitForResponse) {
-        message["identifier"] = uuid();
-      }
-      if (shouldWaitForResponse) {
-        let callback = (data: Buffer) => {
-          try {
-            that.decodeMessage(data)
-              .then(message => {
-                resolve(message);
-              })
-              .catch(error => {
-                that.emit('error', error);
-              });
-          } catch(error) {
-            that.emit('error', error);
-          }
+
+      if (waitForResponse) {
+        let identifier = uuid();
+        message["identifier"] = identifier;
+        let callback = (message: Message) => {
+          resolve(message);
         }; 
-        if (that.unidentifiableMessageTypes.indexOf(type) == -1) {
-          that.addCallback(message["identifier"], callback);
-        } else {
-          that.addCallback("type_" + snake(name).toUpperCase(), callback);
-        }
+        that.addCallback(identifier, callback);
       }
       
       let data = ProtocolMessage.encode(message).finish();
@@ -226,8 +187,8 @@ export class Connection extends TypedEventEmitter<Connection.Events> {
         that.socket.write(bytes);
       }
 
-      if (!shouldWaitForResponse) {
-        resolve(message);
+      if (!waitForResponse) {
+        resolve(new Message(message));
       }
     });
   }
@@ -249,8 +210,7 @@ export class Connection extends TypedEventEmitter<Connection.Events> {
             let ProtocolMessage = root.lookupType("ProtocolMessage");
             let message = ProtocolMessage.decode(data);
             that.emit('debug', "DEBUG: <<<< Received Protobuf=" + JSON.stringify(message.toJSON(), null, 2));
-            let key = "." + name.charAt(0).toLowerCase() + name.slice(1);
-            return message[key];
+            return message;
           });
       });
   }

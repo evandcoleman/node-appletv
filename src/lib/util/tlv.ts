@@ -24,6 +24,7 @@ const Tag = {
     EncryptedData:  0x05,
     Sequence:       0x06,
     ErrorCode:      0x07,
+    BackOff:        0x08,
     Signature:      0x0A, // 64 bytes
 
     MFiCertificate: 0x09,

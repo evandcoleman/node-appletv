@@ -15,4 +15,5 @@ export declare class Pairing {
     */
     initiatePair(): Promise<(pin: string) => Promise<AppleTV>>;
     private completePairing(pin);
+    private waitForSequence(sequence, timeout?);
 }

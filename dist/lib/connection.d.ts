@@ -10,15 +10,13 @@ export declare class Connection extends TypedEventEmitter<Connection.Events> {
     private callbacks;
     private ProtocolMessage;
     private buffer;
-    private unidentifiableMessageTypes;
-    private waitForResponseMessageTypes;
     constructor(device: AppleTV);
     private addCallback(identifier, callback);
-    private executeCallbacks(identifier, data);
+    private executeCallbacks(identifier, message);
     open(): Promise<void>;
     close(): void;
-    sendBlank(typeName: string, waitForResponse: boolean, credentials?: Credentials): Promise<ProtoMessage<{}>>;
-    send(message: ProtoMessage<{}>, waitForResponse: boolean, credentials?: Credentials): Promise<ProtoMessage<{}>>;
+    sendBlank(typeName: string, waitForResponse: boolean, credentials?: Credentials): Promise<Message>;
+    send(message: ProtoMessage<{}>, waitForResponse: boolean, credentials?: Credentials): Promise<Message>;
     private sendProtocolMessage(message, name, type, waitForResponse, credentials?);
     private decodeMessage(data);
 }

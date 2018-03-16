@@ -6,6 +6,7 @@ const path = require("path");
 const crypto = require("crypto");
 const ed25519 = require("ed25519");
 const credentials_1 = require("./credentials");
+const message_1 = require("./message");
 const tlv_1 = require("./util/tlv");
 const encryption_1 = require("./util/encryption");
 class Pairing {
@@ -28,11 +29,25 @@ class Pairing {
                 pairingData: tlvData
             });
             return that.device
-                .sendMessage(message);
+                .sendMessage(message, false)
+                .then(() => {
+                return that.waitForSequence(0x02);
+            });
         })
             .then(message => {
-            let pairingData = message['pairingData'];
+            let pairingData = message.payload.pairingData;
             let tlvData = tlv_1.default.decode(pairingData);
+            if (tlvData[tlv_1.default.Tag.BackOff]) {
+                let backOff = tlvData[tlv_1.default.Tag.BackOff];
+                let seconds = backOff.readIntBE(0, backOff.byteLength);
+                if (seconds > 0) {
+                    throw new Error("You've attempt to pair too recently. Try again in " + seconds + " seconds.");
+                }
+            }
+            if (tlvData[tlv_1.default.Tag.ErrorCode]) {
+                let buffer = tlvData[tlv_1.default.Tag.ErrorCode];
+                throw new Error(that.device.name + " responded with error code " + buffer.readIntBE(0, buffer.byteLength) + ". Try rebooting your Apple TV.");
+            }
             that.deviceSalt = tlvData[tlv_1.default.Tag.Salt];
             that.devicePublicKey = tlvData[tlv_1.default.Tag.PublicKey];
             if (that.deviceSalt.byteLength != 16) {
@@ -62,9 +77,12 @@ class Pairing {
                 pairingData: tlvData
             });
             return that.device
-                .sendMessage(message)
+                .sendMessage(message, false)
+                .then(() => {
+                return that.waitForSequence(0x04);
+            })
                 .then(message => {
-                let pairingData = message["pairingData"];
+                let pairingData = message.payload.pairingData;
                 that.deviceProof = tlv_1.default.decode(pairingData)[tlv_1.default.Tag.Proof];
                 // console.log("DEBUG: Device Proof=" + that.deviceProof.toString('hex'));
                 that.srp.checkM2(that.deviceProof);
@@ -86,9 +104,12 @@ class Pairing {
                     pairingData: outerTLV
                 });
                 return that.device
-                    .sendMessage(nextMessage)
+                    .sendMessage(nextMessage, false)
+                    .then(() => {
+                    return that.waitForSequence(0x06);
+                })
                     .then(message => {
-                    let encryptedData = tlv_1.default.decode(message["pairingData"])[tlv_1.default.Tag.EncryptedData];
+                    let encryptedData = tlv_1.default.decode(message.payload.pairingData)[tlv_1.default.Tag.EncryptedData];
                     let cipherText = encryptedData.slice(0, -16);
                     let hmac = encryptedData.slice(-16);
                     let decrpytedData = encryption_1.default.verifyAndDecrypt(cipherText, hmac, null, Buffer.from('PS-Msg06'), encryptionKey);
@@ -97,6 +118,29 @@ class Pairing {
                     return that.device;
                 });
             });
+        });
+    }
+    waitForSequence(sequence, timeout = 3) {
+        let that = this;
+        let handler = (message, resolve) => {
+            let tlvData = tlv_1.default.decode(message.payload.pairingData);
+            if (Buffer.from([sequence]).equals(tlvData[tlv_1.default.Tag.Sequence])) {
+                resolve(message);
+            }
+        };
+        return new Promise((resolve, reject) => {
+            that.device.on('message', (message) => {
+                if (message.type == message_1.Message.Type.CryptoPairingMessage) {
+                    handler(message, resolve);
+                }
+            });
+            setTimeout(() => {
+                reject(new Error("Timed out waiting for crypto sequence " + sequence));
+            }, timeout * 1000);
+        })
+            .then(value => {
+            that.device.removeListener('message', handler);
+            return value;
         });
     }
 }

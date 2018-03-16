@@ -60,7 +60,7 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
     let that = this;
     this.connection.on('message', (message: Message) => {
       that.emit('message', message);
-      if (message.type == "SetStateMessage") {
+      if (message.type == Message.Type.SetStateMessage) {
         if (message.payload == null) {
           that.emit('nowPlaying', null);
           return;
@@ -160,11 +160,15 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
               return that.sendConnectionState();
             });
         } else {
-          return that.sendConnectionState();
+          return null;
         }
       })
       .then(() => {
-        return that.sendClientUpdatesConfig();
+        if (credentials) {
+          return that.sendClientUpdatesConfig();
+        } else {
+          return null;
+        }
       })
       .then(() => {
         return Promise.resolve(that);
@@ -183,7 +187,7 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
   * @param message  The Protobuf message to send.
   * @returns A promise that resolves to the response from the AppleTV.
   */
-  sendMessage(message: ProtoMessage<{}>, waitForResponse: boolean = true): Promise<ProtoMessage<{}>> {
+  sendMessage(message: ProtoMessage<{}>, waitForResponse: boolean): Promise<Message> {
     return this.connection
       .send(message, waitForResponse, this.credentials);
   }
@@ -256,7 +260,7 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
           ])
         });
 
-        return that.sendMessage(message)
+        return that.sendMessage(message, false)
           .then(() => {
             return that;
           });
@@ -278,14 +282,14 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
         let message = type.create(params);
 
         return that
-          .sendMessage(message)
+          .sendMessage(message, waitForResponse)
           .then(message => {
             return message;
           });
       });
   }
 
-  private sendIntroduction(): Promise<ProtoMessage<{}>> {
+  private sendIntroduction(): Promise<Message> {
     let that = this;
     return load(path.resolve(__dirname + "/protos/DeviceInfoMessage.proto"))
       .then(root => {
@@ -301,11 +305,11 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
         });
 
         return that
-          .sendMessage(message);
+          .sendMessage(message, true);
       });
   }
 
-  private sendConnectionState(): Promise<ProtoMessage<{}>> {
+  private sendConnectionState(): Promise<Message> {
     let that = this;
     return load(path.resolve(__dirname + "/protos/SetConnectionStateMessage.proto"))
       .then(root => {
@@ -316,11 +320,11 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
         });
 
         return that
-          .sendMessage(message);
+          .sendMessage(message, false);
       });
   }
 
-  private sendClientUpdatesConfig(): Promise<ProtoMessage<{}>> {
+  private sendClientUpdatesConfig(): Promise<Message> {
     let that = this;
     return load(path.resolve(__dirname + "/protos/ClientUpdatesConfigMessage.proto"))
       .then(root => {
@@ -333,11 +337,11 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
         });
 
         return that
-          .sendMessage(message);
+          .sendMessage(message, false);
       });
   }
 
-  private sendWakeDevice(): Promise<ProtoMessage<{}>> {
+  private sendWakeDevice(): Promise<Message> {
     let that = this;
     return load(path.resolve(__dirname + "/protos/WakeDeviceMessage.proto"))
       .then(root => {
@@ -345,7 +349,7 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
         let message = type.create({});
 
         return that
-          .sendMessage(message);
+          .sendMessage(message, false);
       });
   }
 }

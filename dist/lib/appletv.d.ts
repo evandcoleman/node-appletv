@@ -48,7 +48,7 @@ export declare class AppleTV extends TypedEventEmitter<AppleTV.Events> {
     * @param message  The Protobuf message to send.
     * @returns A promise that resolves to the response from the AppleTV.
     */
-    sendMessage(message: ProtoMessage<{}>, waitForResponse?: boolean): Promise<ProtoMessage<{}>>;
+    sendMessage(message: ProtoMessage<{}>, waitForResponse: boolean): Promise<Message>;
     /**
     * Requests the current playback queue from the Apple TV.
     * @param options Options to send

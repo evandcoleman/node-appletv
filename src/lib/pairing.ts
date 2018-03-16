@@ -1,13 +1,14 @@
 import * as srp from 'fast-srp-hap';
 import { api as Sodium } from 'sodium';
 import { v4 as uuid } from 'uuid';
-import { load, Message } from 'protobufjs';
+import { load } from 'protobufjs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import * as ed25519 from 'ed25519';
 
 import { AppleTV } from './appletv';
 import { Credentials } from './credentials';
+import { Message } from './message';
 import tlv from './util/tlv';
 import enc from './util/encryption';
 
@@ -45,11 +46,27 @@ export class Pairing {
         });
 
         return that.device
-          .sendMessage(message);
+          .sendMessage(message, false)
+          .then(() => {
+            return that.waitForSequence(0x02);
+          });
       })
       .then(message => {
-        let pairingData = message['pairingData'];
+        let pairingData = message.payload.pairingData;
         let tlvData = tlv.decode(pairingData);
+
+        if (tlvData[tlv.Tag.BackOff]) {
+          let backOff: Buffer = tlvData[tlv.Tag.BackOff];
+          let seconds = backOff.readIntBE(0, backOff.byteLength);
+          if (seconds > 0) {
+            throw new Error("You've attempt to pair too recently. Try again in " + seconds + " seconds.");
+          }
+        }
+        if (tlvData[tlv.Tag.ErrorCode]) {
+          let buffer: Buffer = tlvData[tlv.Tag.ErrorCode];
+          throw new Error(that.device.name + " responded with error code " + buffer.readIntBE(0, buffer.byteLength) + ". Try rebooting your Apple TV.");
+        }
+
         that.deviceSalt = tlvData[tlv.Tag.Salt];
         that.devicePublicKey = tlvData[tlv.Tag.PublicKey];
 
@@ -95,9 +112,12 @@ export class Pairing {
         });
 
         return that.device
-          .sendMessage(message)
+          .sendMessage(message, false)
+          .then(() => {
+            return that.waitForSequence(0x04);
+          })
           .then(message => {
-            let pairingData = message["pairingData"];
+            let pairingData = message.payload.pairingData;
             that.deviceProof = tlv.decode(pairingData)[tlv.Tag.Proof];
             // console.log("DEBUG: Device Proof=" + that.deviceProof.toString('hex'));
 
@@ -143,9 +163,12 @@ export class Pairing {
             });
 
             return that.device
-              .sendMessage(nextMessage)
+              .sendMessage(nextMessage, false)
+              .then(() => {
+                return that.waitForSequence(0x06);
+              })
               .then(message => {
-                let encryptedData = tlv.decode(message["pairingData"])[tlv.Tag.EncryptedData];
+                let encryptedData = tlv.decode(message.payload.pairingData)[tlv.Tag.EncryptedData];
                 let cipherText = encryptedData.slice(0, -16);
                 let hmac = encryptedData.slice(-16);
                 let decrpytedData = enc.verifyAndDecrypt(cipherText, hmac, null, Buffer.from('PS-Msg06'), encryptionKey);
@@ -162,5 +185,30 @@ export class Pairing {
               });
           });
       });
+  }
+
+  private waitForSequence(sequence: number, timeout: number = 3): Promise<Message> {
+    let that = this;
+    let handler = (message: Message, resolve: any) => {
+      let tlvData = tlv.decode(message.payload.pairingData);
+      if (Buffer.from([sequence]).equals(tlvData[tlv.Tag.Sequence])) {
+        resolve(message);
+      }
+    };
+
+    return new Promise<Message>((resolve, reject) => {
+      that.device.on('message', (message: Message) => {
+        if (message.type == Message.Type.CryptoPairingMessage) {
+          handler(message, resolve);
+        }
+      });
+      setTimeout(() => {
+        reject(new Error("Timed out waiting for crypto sequence " + sequence));
+      }, timeout * 1000);
+    })
+    .then(value => {
+      that.device.removeListener('message', handler);
+      return value;
+    });
   }
 }

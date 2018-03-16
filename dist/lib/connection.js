@@ -15,17 +15,6 @@ class Connection extends typed_events_1.default {
         this.device = device;
         this.callbacks = new Map();
         this.buffer = Buffer.alloc(0);
-        this.unidentifiableMessageTypes = [
-            4,
-            5,
-            34
-        ];
-        this.waitForResponseMessageTypes = [
-            3,
-            15,
-            32,
-            34
-        ];
         this.socket = new net_1.Socket();
         let that = this;
         this.socket.on('data', (data) => {
@@ -43,28 +32,15 @@ class Connection extends typed_events_1.default {
                     messageBytes = device.credentials.decrypt(messageBytes);
                     that.emit('debug', "DEBUG: Decrypted Data=" + messageBytes.toString('hex'));
                 }
-                let message = that.ProtocolMessage.decode(messageBytes);
-                let types = that.ProtocolMessage.lookupEnum("Type");
-                let name = types.valuesById[message["type"]];
-                let identifier = message["identifier"] || "type_" + name;
-                if (!that.executeCallbacks(identifier, messageBytes)) {
-                    that.emit('debug', "DEBUG: <<<< Received Protobuf=" + JSON.stringify(that.decodeMessage(messageBytes), null, 2));
-                }
-                if (name) {
-                    let id = camelcase(name);
-                    let fixedId = id.charAt(0).toUpperCase() + id.slice(1);
-                    protobufjs_1.load(path.resolve(__dirname + "/protos/" + fixedId + ".proto"), (error, root) => {
-                        if (error) {
-                            that.emit('error', error);
-                        }
-                        else {
-                            let type = root.lookupType(fixedId);
-                            let ProtocolMessage = type.parent['ProtocolMessage'];
-                            let message = new message_1.Message(fixedId, ProtocolMessage.decode(messageBytes).toJSON());
-                            that.emit('message', message);
-                        }
-                    });
-                }
+                that.decodeMessage(messageBytes)
+                    .then(protoMessage => {
+                    let message = new message_1.Message(protoMessage);
+                    that.emit('message', message);
+                    that.executeCallbacks(message.identifier, message);
+                })
+                    .catch(error => {
+                    that.emit('error', error);
+                });
             }
             catch (error) {
                 that.emit('error', error);
@@ -94,12 +70,12 @@ class Connection extends typed_events_1.default {
                 }]);
         }
     }
-    executeCallbacks(identifier, data) {
+    executeCallbacks(identifier, message) {
         let callbacks = this.callbacks.get(identifier);
         if (callbacks) {
             for (var i = 0; i < callbacks.length; i++) {
                 let callback = callbacks[i];
-                callback.callback(data);
+                callback.callback(message);
                 this.callbacks.get(identifier).splice(i, 1);
             }
             return true;
@@ -158,31 +134,13 @@ class Connection extends typed_events_1.default {
         let that = this;
         return new Promise((resolve, reject) => {
             let ProtocolMessage = message.$type;
-            let shouldWaitForResponse = that.waitForResponseMessageTypes.indexOf(type) > -1 && waitForResponse;
-            if (that.unidentifiableMessageTypes.indexOf(type) == -1 && shouldWaitForResponse) {
-                message["identifier"] = uuid_1.v4();
-            }
-            if (shouldWaitForResponse) {
-                let callback = (data) => {
-                    try {
-                        that.decodeMessage(data)
-                            .then(message => {
-                            resolve(message);
-                        })
-                            .catch(error => {
-                            that.emit('error', error);
-                        });
-                    }
-                    catch (error) {
-                        that.emit('error', error);
-                    }
+            if (waitForResponse) {
+                let identifier = uuid_1.v4();
+                message["identifier"] = identifier;
+                let callback = (message) => {
+                    resolve(message);
                 };
-                if (that.unidentifiableMessageTypes.indexOf(type) == -1) {
-                    that.addCallback(message["identifier"], callback);
-                }
-                else {
-                    that.addCallback("type_" + snake(name).toUpperCase(), callback);
-                }
+                that.addCallback(identifier, callback);
             }
             let data = ProtocolMessage.encode(message).finish();
             that.emit('debug', "DEBUG: >>>> Send Data=" + data.toString('hex'));
@@ -200,8 +158,8 @@ class Connection extends typed_events_1.default {
                 let bytes = Buffer.concat([messageLength, data]);
                 that.socket.write(bytes);
             }
-            if (!shouldWaitForResponse) {
-                resolve(message);
+            if (!waitForResponse) {
+                resolve(new message_1.Message(message));
             }
         });
     }
@@ -221,8 +179,7 @@ class Connection extends typed_events_1.default {
                 let ProtocolMessage = root.lookupType("ProtocolMessage");
                 let message = ProtocolMessage.decode(data);
                 that.emit('debug', "DEBUG: <<<< Received Protobuf=" + JSON.stringify(message.toJSON(), null, 2));
-                let key = "." + name.charAt(0).toLowerCase() + name.slice(1);
-                return message[key];
+                return message;
             });
         });
     }

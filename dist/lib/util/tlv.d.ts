@@ -9,6 +9,7 @@ declare const _default: {
         EncryptedData: number;
         Sequence: number;
         ErrorCode: number;
+        BackOff: number;
         Signature: number;
         MFiCertificate: number;
         MFiSignature: number;

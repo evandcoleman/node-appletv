@@ -4,6 +4,7 @@ const protobufjs_1 = require("protobufjs");
 const path = require("path");
 const ed25519 = require("ed25519");
 const curve25519 = require("curve25519-n2");
+const message_1 = require("./message");
 const tlv_1 = require("./util/tlv");
 const encryption_1 = require("./util/encryption");
 class Verifier {
@@ -24,9 +25,12 @@ class Verifier {
                 pairingData: tlvData
             });
             return that.device
-                .sendMessage(message)
+                .sendMessage(message, false)
+                .then(() => {
+                return that.waitForSequence(0x02);
+            })
                 .then(message => {
-                let pairingData = message['pairingData'];
+                let pairingData = message.payload.pairingData;
                 let tlvData = tlv_1.default.decode(pairingData);
                 let sessionPublicKey = tlvData[tlv_1.default.Tag.PublicKey];
                 let encryptedData = tlvData[tlv_1.default.Tag.EncryptedData];
@@ -59,16 +63,42 @@ class Verifier {
                     pairingData: outerTLV
                 });
                 return that.device
-                    .sendMessage(newMessage)
-                    .then(message => {
+                    .sendMessage(newMessage, false)
+                    .then(() => {
+                    return that.waitForSequence(0x04);
+                })
+                    .then(() => {
                     let readKey = encryption_1.default.HKDF("sha512", Buffer.from("MediaRemote-Salt"), sharedSecret, Buffer.from("MediaRemote-Read-Encryption-Key"), 32);
                     let writeKey = encryption_1.default.HKDF("sha512", Buffer.from("MediaRemote-Salt"), sharedSecret, Buffer.from("MediaRemote-Write-Encryption-Key"), 32);
-                    return Promise.resolve({
+                    return {
                         readKey: readKey,
                         writeKey: writeKey
-                    });
+                    };
                 });
             });
+        });
+    }
+    waitForSequence(sequence, timeout = 3) {
+        let that = this;
+        let handler = (message, resolve) => {
+            let tlvData = tlv_1.default.decode(message.payload.pairingData);
+            if (Buffer.from([sequence]).equals(tlvData[tlv_1.default.Tag.Sequence])) {
+                resolve(message);
+            }
+        };
+        return new Promise((resolve, reject) => {
+            that.device.on('message', (message) => {
+                if (message.type == message_1.Message.Type.CryptoPairingMessage) {
+                    handler(message, resolve);
+                }
+            });
+            setTimeout(() => {
+                reject(new Error("Timed out waiting for crypto sequence " + sequence));
+            }, timeout * 1000);
+        })
+            .then(value => {
+            that.device.removeListener('message', handler);
+            return value;
         });
     }
 }

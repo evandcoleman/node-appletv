@@ -10,9 +10,10 @@ import { pair } from './pair';
 
 cli
   .version('1.0.0')
-  .command('pair', 'Pair with an AppleTV')
+  .command('pair', 'Pair with an Apple TV')
+  .option('--timeout <timeout>', 'The amount of time (in seconds) to scan for Apple TVs', cli.INTEGER) 
   .action((args, options, logger) => {
-    scan(logger)
+    scan(logger, options.timeout)
       .then(device => {
         device.on('debug', (message: string) => {
           logger.debug(message);
@@ -23,7 +24,7 @@ cli
         });
         return pair(device, logger)
           .then(keys => {
-            logger.info("Success! Credentials: " + device.credentials.toString());
+            logger.info("Credentials: " + device.credentials.toString());
             process.exit();
           });
       })
@@ -36,7 +37,7 @@ cli
 
 cli
   .version('1.0.0')
-  .command('command', 'Send a command to an AppleTV')
+  .command('command', 'Send a command to an Apple TV')
   .argument('<command>', 'The command to send', /^up|down|left|right|menu|play|pause|next|previous|suspend$/)
   .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
   .action((args, options, logger) => {
@@ -45,7 +46,7 @@ cli
       process.exit();
     }
     let credentials = Credentials.parse(options.credentials);
-    scan(logger, credentials.uniqueIdentifier)
+    scan(logger, null, credentials.uniqueIdentifier)
       .then(device => {
         device.on('debug', (message: string) => {
           logger.debug(message);
@@ -74,7 +75,7 @@ cli
 
 cli
   .version('1.0.0')
-  .command('state', 'Logs the playback state from the AppleTV')
+  .command('state', 'Logs the playback state from the Apple TV')
   .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
   .action((args, options, logger) => {
     if (!options.credentials) {
@@ -82,7 +83,7 @@ cli
       process.exit();
     }
     let credentials = Credentials.parse(options.credentials);
-    scan(logger, credentials.uniqueIdentifier)
+    scan(logger, null, credentials.uniqueIdentifier)
       .then(device => {
         device.on('debug', (message: string) => {
           logger.debug(message);
@@ -108,7 +109,7 @@ cli
 
 cli
   .version('1.0.0')
-  .command('supportedCommands', 'Logs the playback state from the AppleTV')
+  .command('supportedCommands', 'Logs the playback state from the Apple TV')
   .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
   .action((args, options, logger) => {
     if (!options.credentials) {
@@ -116,7 +117,7 @@ cli
       process.exit();
     }
     let credentials = Credentials.parse(options.credentials);
-    scan(logger, credentials.uniqueIdentifier)
+    scan(logger, null, credentials.uniqueIdentifier)
       .then(device => {
         device.on('debug', (message: string) => {
           logger.debug(message);
@@ -142,7 +143,7 @@ cli
 
 cli
   .version('1.0.0')
-  .command('queue', 'Request the playback state from the AppleTV')
+  .command('queue', 'Request the playback state from the Apple TV')
   .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
   .option('--location <location>', 'The location in the queue', cli.INTEGER) 
   .option('--length <length>', 'The length of the queue', cli.INTEGER) 
@@ -155,7 +156,7 @@ cli
       process.exit();
     }
     let credentials = Credentials.parse(options.credentials);
-    scan(logger, credentials.uniqueIdentifier)
+    scan(logger, null, credentials.uniqueIdentifier)
       .then(device => {
         device.on('debug', (message: string) => {
           logger.debug(message);
@@ -189,7 +190,7 @@ cli
 
 cli
   .version('1.0.0')
-  .command('messages', 'Log all messages sent from the AppleTV')
+  .command('messages', 'Log all messages sent from the Apple TV')
   .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
   .action((args, options, logger) => {
     if (!options.credentials) {
@@ -197,7 +198,7 @@ cli
       process.exit();
     }
     let credentials = Credentials.parse(options.credentials);
-    scan(logger, credentials.uniqueIdentifier)
+    scan(logger, null, credentials.uniqueIdentifier)
       .then(device => {
         device.on('debug', (message: string) => {
           logger.debug(message);

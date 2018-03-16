@@ -9,6 +9,7 @@ const verifier_1 = require("./verifier");
 const now_playing_info_1 = require("./now-playing-info");
 const supported_command_1 = require("./supported-command");
 const typed_events_1 = require("./typed-events");
+const message_1 = require("./message");
 const number_1 = require("./util/number");
 class AppleTV extends typed_events_1.default {
     constructor(service) {
@@ -29,7 +30,7 @@ class AppleTV extends typed_events_1.default {
         let that = this;
         this.connection.on('message', (message) => {
             that.emit('message', message);
-            if (message.type == "SetStateMessage") {
+            if (message.type == message_1.Message.Type.SetStateMessage) {
                 if (message.payload == null) {
                     that.emit('nowPlaying', null);
                     return;
@@ -125,11 +126,16 @@ class AppleTV extends typed_events_1.default {
                 });
             }
             else {
-                return that.sendConnectionState();
+                return null;
             }
         })
             .then(() => {
-            return that.sendClientUpdatesConfig();
+            if (credentials) {
+                return that.sendClientUpdatesConfig();
+            }
+            else {
+                return null;
+            }
         })
             .then(() => {
             return Promise.resolve(that);
@@ -146,7 +152,7 @@ class AppleTV extends typed_events_1.default {
     * @param message  The Protobuf message to send.
     * @returns A promise that resolves to the response from the AppleTV.
     */
-    sendMessage(message, waitForResponse = true) {
+    sendMessage(message, waitForResponse) {
         return this.connection
             .send(message, waitForResponse, this.credentials);
     }
@@ -213,7 +219,7 @@ class AppleTV extends typed_events_1.default {
                     Buffer.from('0000000000000001000000', 'hex')
                 ])
             });
-            return that.sendMessage(message)
+            return that.sendMessage(message, false)
                 .then(() => {
                 return that;
             });
@@ -233,7 +239,7 @@ class AppleTV extends typed_events_1.default {
             }
             let message = type.create(params);
             return that
-                .sendMessage(message)
+                .sendMessage(message, waitForResponse)
                 .then(message => {
                 return message;
             });
@@ -254,7 +260,7 @@ class AppleTV extends typed_events_1.default {
                 protocolVersion: 1
             });
             return that
-                .sendMessage(message);
+                .sendMessage(message, true);
         });
     }
     sendConnectionState() {
@@ -267,7 +273,7 @@ class AppleTV extends typed_events_1.default {
                 state: stateEnum.values['Connected']
             });
             return that
-                .sendMessage(message);
+                .sendMessage(message, false);
         });
     }
     sendClientUpdatesConfig() {
@@ -282,7 +288,7 @@ class AppleTV extends typed_events_1.default {
                 keyboardUpdates: true
             });
             return that
-                .sendMessage(message);
+                .sendMessage(message, false);
         });
     }
     sendWakeDevice() {
@@ -292,7 +298,7 @@ class AppleTV extends typed_events_1.default {
             let type = root.lookupType('WakeDeviceMessage');
             let message = type.create({});
             return that
-                .sendMessage(message);
+                .sendMessage(message, false);
         });
     }
 }
