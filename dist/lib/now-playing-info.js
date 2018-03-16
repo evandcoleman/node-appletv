@@ -29,12 +29,12 @@ class NowPlayingInfo {
     }
     toString() {
         if (this.artist) {
-            return this.title + " by " + this.artist + " (" + this.percentCompleted() + ") | "
+            return this.title + " by " + this.artist + " (" + this.percentCompleted() + "%) | "
                 + this.appDisplayName + " (" + this.appBundleIdentifier + ") | "
                 + this.playbackState;
         }
         else if (this.title) {
-            return this.title + " (" + this.percentCompleted() + ") | "
+            return this.title + " (" + this.percentCompleted() + "%) | "
                 + this.appDisplayName + " (" + this.appBundleIdentifier + ") | "
                 + this.playbackState;
         }
