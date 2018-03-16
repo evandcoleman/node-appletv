@@ -2,7 +2,7 @@ import { EventEmitter } from 'events'
 
 export default class TypedEventEmitter<T> extends EventEmitter {
   constructor(...args) {
-    super(...args)
+    super()
   }
 
   _on(event: string, callback: (...args) => void): this {
