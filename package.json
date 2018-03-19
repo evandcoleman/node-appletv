@@ -11,9 +11,10 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "prepublish": "npm run build",
+    "prepublish": "npm run build && npm run docs",
     "build": "npm run clean && tsc && cp -R ./src/lib/protos ./dist/lib/protos",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "docs": "rimraf docs && typedoc --mode modules --excludePrivate --excludeExternals --out ./docs ./src"
   },
   "bin": {
     "appletv": "bin/appletv"
@@ -42,6 +43,7 @@
     "@types/node": "^9.3.0",
     "@types/uuid": "^3.4.3",
     "rimraf": "^2.6.2",
+    "typedoc": "^0.11.1",
     "typescript": "^2.6.2"
   }
 }
