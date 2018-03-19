@@ -37,43 +37,6 @@ cli
 
 cli
   .version('1.0.0')
-  .command('wake', 'Wake an Apple TV')
-  .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
-  .action((args, options, logger) => {
-    if (!options.credentials) {
-      logger.error("Credentials are required. Pair first.");
-      process.exit();
-    }
-    let credentials = Credentials.parse(options.credentials);
-    scan(logger, null, credentials.uniqueIdentifier)
-      .then(device => {
-        device.on('debug', (message: string) => {
-          logger.debug(message);
-        });
-        device.on('error', (error: Error) => {
-          logger.error(error.message);
-          logger.debug(error.stack);
-        });
-        return device
-          .openConnection(credentials)
-          .then(() => {
-            return device
-              .wake()
-              .then(result => {
-                logger.info("Success!");
-                process.exit();
-              });
-           });
-      })
-      .catch(error => {
-        logger.error(error.message);
-        logger.debug(error.stack);
-        process.exit();
-      });
-  });
-
-cli
-  .version('1.0.0')
   .command('command', 'Send a command to an Apple TV')
   .argument('<command>', 'The command to send', /^up|down|left|right|menu|play|pause|next|previous|suspend$/)
   .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 

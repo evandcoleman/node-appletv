@@ -150,25 +150,11 @@ class AppleTV extends typed_events_1.default {
     /**
     * Send a Protobuf message to the AppleTV. This is for advanced usage only.
     * @param message  The Protobuf message to send.
-    * @returns A promise that resolves to the response from the AppleTV if waitForResponse is true, otherwise the sent message.
+    * @returns A promise that resolves to the response from the AppleTV.
     */
     sendMessage(message, waitForResponse) {
         return this.connection
             .send(message, waitForResponse, this.credentials);
-    }
-    /**
-   * Wakes the Apple TV.
-   * @returns A Promise that resolves to the Message object that was sent.
-   */
-    wake() {
-        let that = this;
-        return protobufjs_1.load(path.resolve(__dirname + "/protos/WakeDeviceMessage.proto"))
-            .then(root => {
-            let type = root.lookupType('WakeDeviceMessage');
-            let message = type.create({});
-            return that
-                .sendMessage(message, false);
-        });
     }
     /**
     * Requests the current playback queue from the Apple TV.
@@ -301,6 +287,16 @@ class AppleTV extends typed_events_1.default {
                 volumeUpdates: true,
                 keyboardUpdates: true
             });
+            return that
+                .sendMessage(message, false);
+        });
+    }
+    sendWakeDevice() {
+        let that = this;
+        return protobufjs_1.load(path.resolve(__dirname + "/protos/WakeDeviceMessage.proto"))
+            .then(root => {
+            let type = root.lookupType('WakeDeviceMessage');
+            let message = type.create({});
             return that
                 .sendMessage(message, false);
         });
