@@ -9,7 +9,7 @@
 
 ## Overview
 
-`node-appletv` is a `node.js` implementation of the MediaRemoteTV protocol which shipped with the 4th-generation Apple TV. This is the protocol that the Apple TV remote app uses, so this should enable the creation of an Apple TV remote app for various platforms. It can also be used in a `homebridge` plugin to connect Apple TV events to HomeKit and vice versa. `node-appletv` can be used as a standalone command line application, or as a module in your own node app. Keep reading for installation and usage instructions.
+`node-appletv` is a `node.js` implementation of the Media Remote Protocol which shipped with the 4th-generation Apple TV. This is the protocol that the Apple TV remote app uses, so this should enable the creation of an Apple TV remote app for various platforms. It can also be used in a `homebridge` plugin to connect Apple TV events to HomeKit and vice versa. `node-appletv` can be used as a standalone command line application, or as a module in your own node app. Keep reading for installation and usage instructions.
 
 ## Usage
 
@@ -79,7 +79,7 @@ return scan()
 #### Connect to a paired Apple TV
 
 ```typescript
-import { scan, parseCredentials } from 'node-appletv';
+import { scan, parseCredentials, NowPlayingInfo } from 'node-appletv';
 
 // see example above for how to get the credentials string
 let credentials = parseCredentials(credentialsString);
@@ -91,10 +91,16 @@ return scan(uniqueIdentifier)
     })
     .then(device => {
     	// you're connected!
+    	// press menu
     	return device.sendKeyCommand(AppleTV.Key.Menu);
     })
     .then(device => {
     	console.log("Sent a menu command!");
+    	
+    	// monitor now playing info
+    	device.on('nowPlaying', (info: NowPlayingInfo) => {
+    		console.log(info.toString());
+    	});
     })
     .catch(error => {
     	console.log(error);
@@ -104,6 +110,11 @@ return scan(uniqueIdentifier)
 The `uniqueIdentifier` is advertised by each Apple TV via Bonjour. Use an app like [Bonjour Browser](http://www.tildesoft.com) to find it. The identifier is also the first value in the string value of the `Credentials` object.
 
 See [homebridge-theater-mode](https://github.com/edc1591/homebridge-theater-mode) for a more practical use of this module.
+
+## TODO
+
+- [ ] Add wake command
+- [ ] Save credentials for paired Apple TVs
 
 ## Development
 
