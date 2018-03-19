@@ -11,6 +11,10 @@
 
 `node-appletv` is a `node.js` implementation of the Media Remote Protocol which shipped with the 4th-generation Apple TV. This is the protocol that the Apple TV remote app uses, so this should enable the creation of an Apple TV remote app for various platforms. It can also be used in a `homebridge` plugin to connect Apple TV events to HomeKit and vice versa. `node-appletv` can be used as a standalone command line application, or as a module in your own node app. Keep reading for installation and usage instructions.
 
+## Documentation
+
+Developer documentation for `node-appletv` can be found [here]().
+
 ## Usage
 
 ### As a standalone cli
