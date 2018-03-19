@@ -1,7 +1,9 @@
 {
   "name": "node-appletv",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A Node.js library for communicating with an Apple TV",
+  "homepage": "https://github.com/edc1591/node-appletv",
+  "bugs": "https://github.com/edc1591/node-appletv/issues",
   "keywords": [
     "apple tv",
     "appletv",
@@ -18,6 +20,10 @@
   },
   "bin": {
     "appletv": "bin/appletv"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/edc1591/node-appletv.git"
   },
   "author": "Evan Coleman <e@edc.me> (https://edc.me)",
   "license": "MIT",

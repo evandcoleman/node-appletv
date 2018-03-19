@@ -13,7 +13,7 @@
 
 ## Documentation
 
-Developer documentation for `node-appletv` can be found [here]().
+Developer documentation for `node-appletv` can be found [here](https://edc1591.github.io/node-appletv/).
 
 ## Usage
 
