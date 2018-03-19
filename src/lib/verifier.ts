@@ -22,100 +22,96 @@ export class Verifier {
     let verifyPublic = curve25519.derivePublicKey(verifyPrivate)
 
     let that = this;
-    return load(path.resolve(__dirname + "/protos/CryptoPairingMessage.proto"))
-      .then(root => {
-        let type = root.lookupType('CryptoPairingMessage');
-        let tlvData = tlv.encode(
-          tlv.Tag.Sequence, 0x01,
-          tlv.Tag.PublicKey, verifyPublic
+    let tlvData = tlv.encode(
+      tlv.Tag.Sequence, 0x01,
+      tlv.Tag.PublicKey, verifyPublic
+    );
+    let message = {
+      status: 0,
+      pairingData: tlvData
+    };
+
+    return that.device
+      .sendMessage('CryptoPairingMessage', 'CryptoPairingMessage', message, false)
+      .then(() => {
+        return that.waitForSequence(0x02);
+      })
+      .then(message => {
+        let pairingData = message.payload.pairingData;
+        let tlvData = tlv.decode(pairingData);
+        let sessionPublicKey = tlvData[tlv.Tag.PublicKey];
+        let encryptedData = tlvData[tlv.Tag.EncryptedData];
+
+        if (sessionPublicKey.length != 32) {
+          throw new Error(`sessionPublicKey must be 32 bytes (but was ${sessionPublicKey.length})`);
+        }
+
+        let sharedSecret = curve25519.deriveSharedSecret(verifyPrivate, sessionPublicKey);
+        let encryptionKey = enc.HKDF(
+          "sha512",
+          Buffer.from("Pair-Verify-Encrypt-Salt"),
+          sharedSecret,
+          Buffer.from("Pair-Verify-Encrypt-Info"),
+          32
         );
-        let message = type.create({
+        let cipherText = encryptedData.slice(0, -16);
+        let hmac = encryptedData.slice(-16);
+        let decryptedData = enc.verifyAndDecrypt(cipherText, hmac, null, Buffer.from('PV-Msg02'), encryptionKey);
+        let innerTLV = tlv.decode(decryptedData);
+        let identifier = innerTLV[tlv.Tag.Username];
+        let signature = innerTLV[tlv.Tag.Signature];
+
+        if (!identifier.equals(that.device.credentials.identifier)) {
+          throw new Error("Identifier mismatch");
+        }
+
+        let deviceInfo = Buffer.concat([sessionPublicKey, Buffer.from(identifier), verifyPublic]);
+        if (!ed25519.Verify(deviceInfo, signature, that.device.credentials.publicKey)) {
+          throw new Error("Signature verification failed");
+        }
+
+        let material = Buffer.concat([verifyPublic, Buffer.from(that.device.credentials.pairingId), sessionPublicKey]);
+        let keyPair = ed25519.MakeKeypair(that.device.credentials.encryptionKey);
+        let signed = ed25519.Sign(material, keyPair);
+        let plainTLV = tlv.encode(
+          tlv.Tag.Username, Buffer.from(that.device.credentials.pairingId),
+          tlv.Tag.Signature, signed
+        );
+        let encryptedTLV = Buffer.concat(enc.encryptAndSeal(plainTLV, null, Buffer.from('PV-Msg03'), encryptionKey));
+        let outerTLV = tlv.encode(
+          tlv.Tag.Sequence, 0x03,
+          tlv.Tag.EncryptedData, encryptedTLV
+        );
+        let newMessage = {
           status: 0,
-          pairingData: tlvData
-        });
+          pairingData: outerTLV
+        };
 
         return that.device
-          .sendMessage(message, false)
+          .sendMessage('CryptoPairingMessage', 'CryptoPairingMessage', newMessage, false)
           .then(() => {
-            return that.waitForSequence(0x02);
+            return that.waitForSequence(0x04);
           })
-          .then(message => {
-            let pairingData = message.payload.pairingData;
-            let tlvData = tlv.decode(pairingData);
-            let sessionPublicKey = tlvData[tlv.Tag.PublicKey];
-            let encryptedData = tlvData[tlv.Tag.EncryptedData];
-
-            if (sessionPublicKey.length != 32) {
-              throw new Error(`sessionPublicKey must be 32 bytes (but was ${sessionPublicKey.length})`);
-            }
-
-            let sharedSecret = curve25519.deriveSharedSecret(verifyPrivate, sessionPublicKey);
-            let encryptionKey = enc.HKDF(
+          .then(() => {
+            let readKey = enc.HKDF(
               "sha512",
-              Buffer.from("Pair-Verify-Encrypt-Salt"),
+              Buffer.from("MediaRemote-Salt"),
               sharedSecret,
-              Buffer.from("Pair-Verify-Encrypt-Info"),
+              Buffer.from("MediaRemote-Read-Encryption-Key"),
               32
             );
-            let cipherText = encryptedData.slice(0, -16);
-            let hmac = encryptedData.slice(-16);
-            let decryptedData = enc.verifyAndDecrypt(cipherText, hmac, null, Buffer.from('PV-Msg02'), encryptionKey);
-            let innerTLV = tlv.decode(decryptedData);
-            let identifier = innerTLV[tlv.Tag.Username];
-            let signature = innerTLV[tlv.Tag.Signature];
-
-            if (!identifier.equals(that.device.credentials.identifier)) {
-              throw new Error("Identifier mismatch");
-            }
-
-            let deviceInfo = Buffer.concat([sessionPublicKey, Buffer.from(identifier), verifyPublic]);
-            if (!ed25519.Verify(deviceInfo, signature, that.device.credentials.publicKey)) {
-              throw new Error("Signature verification failed");
-            }
-
-            let material = Buffer.concat([verifyPublic, Buffer.from(that.device.credentials.pairingId), sessionPublicKey]);
-            let keyPair = ed25519.MakeKeypair(that.device.credentials.encryptionKey);
-            let signed = ed25519.Sign(material, keyPair);
-            let plainTLV = tlv.encode(
-              tlv.Tag.Username, Buffer.from(that.device.credentials.pairingId),
-              tlv.Tag.Signature, signed
+            let writeKey = enc.HKDF(
+              "sha512",
+              Buffer.from("MediaRemote-Salt"),
+              sharedSecret,
+              Buffer.from("MediaRemote-Write-Encryption-Key"),
+              32
             );
-            let encryptedTLV = Buffer.concat(enc.encryptAndSeal(plainTLV, null, Buffer.from('PV-Msg03'), encryptionKey));
-            let outerTLV = tlv.encode(
-              tlv.Tag.Sequence, 0x03,
-              tlv.Tag.EncryptedData, encryptedTLV
-            );
-            let newMessage = type.create({
-              status: 0,
-              pairingData: outerTLV
-            });
 
-            return that.device
-              .sendMessage(newMessage, false)
-              .then(() => {
-                return that.waitForSequence(0x04);
-              })
-              .then(() => {
-                let readKey = enc.HKDF(
-                  "sha512",
-                  Buffer.from("MediaRemote-Salt"),
-                  sharedSecret,
-                  Buffer.from("MediaRemote-Read-Encryption-Key"),
-                  32
-                );
-                let writeKey = enc.HKDF(
-                  "sha512",
-                  Buffer.from("MediaRemote-Salt"),
-                  sharedSecret,
-                  Buffer.from("MediaRemote-Write-Encryption-Key"),
-                  32
-                );
-
-                return {
-                  readKey: readKey,
-                  writeKey: writeKey
-                };
-              });
+            return {
+              readKey: readKey,
+              writeKey: writeKey
+            };
           });
       });
   }

@@ -184,12 +184,22 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
 
   /**
   * Send a Protobuf message to the AppleTV. This is for advanced usage only.
-  * @param message  The Protobuf message to send.
+  * @param definitionFilename  The Protobuf filename of the message type.
+  * @param messageType  The name of the message.
+  * @param body  The message body
+  * @param waitForResponse  Whether or not to wait for a response before resolving the Promise.
   * @returns A promise that resolves to the response from the AppleTV.
   */
-  sendMessage(message: ProtoMessage<{}>, waitForResponse: boolean): Promise<Message> {
-    return this.connection
-      .send(message, waitForResponse, this.credentials);
+  sendMessage(definitionFilename: string, messageType: string, body: {}, waitForResponse: boolean): Promise<Message> {
+    return load(path.resolve(__dirname + "/protos/" + definitionFilename + ".proto"))
+      .then(root => {
+        let type = root.lookupType(messageType);
+        return type.create(body);
+      })
+      .then(message => {
+        return this.connection
+          .send(message, waitForResponse, this.credentials);
+      });
   }
 
   /**
@@ -240,73 +250,50 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
   }
 
   private sendKeyPress(usePage: number, usage: number, down: boolean): Promise<AppleTV> {
+    let time = Buffer.from('438922cf08020000', 'hex');
+    let data = Buffer.concat([
+      number.UInt16toBufferBE(usePage),
+      number.UInt16toBufferBE(usage),
+      down ? number.UInt16toBufferBE(1) : number.UInt16toBufferBE(0)
+    ]);
+
+    let body = {
+      hidEventData: Buffer.concat([
+        time,
+        Buffer.from('00000000000000000100000000000000020' + '00000200000000300000001000000000000', 'hex'),
+        data,
+        Buffer.from('0000000000000001000000', 'hex')
+      ])
+    };
     let that = this;
-    return load(path.resolve(__dirname + "/protos/SendHIDEventMessage.proto"))
-      .then(root => {
-        let time = Buffer.from('438922cf08020000', 'hex');
-        let data = Buffer.concat([
-          number.UInt16toBufferBE(usePage),
-          number.UInt16toBufferBE(usage),
-          down ? number.UInt16toBufferBE(1) : number.UInt16toBufferBE(0)
-        ]);
-
-        let type = root.lookupType('SendHIDEventMessage');
-        let message = type.create({
-          hidEventData: Buffer.concat([
-            time,
-            Buffer.from('00000000000000000100000000000000020' + '00000200000000300000001000000000000', 'hex'),
-            data,
-            Buffer.from('0000000000000001000000', 'hex')
-          ])
-        });
-
-        return that.sendMessage(message, false)
-          .then(() => {
-            return that;
-          });
+    return this.sendMessage("SendHIDEventMessage", "SendHIDEventMessage", body, false)
+      .then(() => {
+        return that;
       });
   }
 
   private requestPlaybackQueueWithWait(options: PlaybackQueueRequestOptions, waitForResponse: boolean): Promise<any> {
-    let that = this;
-    return load(path.resolve(__dirname + "/protos/PlaybackQueueRequestMessage.proto"))
-      .then(root => {
-        let type = root.lookupType('PlaybackQueueRequestMessage');
-        var params: any = options;
-        params.requestID = uuid();
-        if (options.artworkSize) {
-          params.artworkWidth = options.artworkSize.width;
-          params.artworkHeight = options.artworkSize.height;
-          delete params.artworkSize;
-        }
-        let message = type.create(params);
-
-        return that
-          .sendMessage(message, waitForResponse)
-          .then(message => {
-            return message;
-          });
-      });
+    var params: any = options;
+    params.requestID = uuid();
+    if (options.artworkSize) {
+      params.artworkWidth = options.artworkSize.width;
+      params.artworkHeight = options.artworkSize.height;
+      delete params.artworkSize;
+    }
+    return this.sendMessage("PlaybackQueueRequestMessage", "PlaybackQueueRequestMessage", params, waitForResponse);
   }
 
   private sendIntroduction(): Promise<Message> {
-    let that = this;
-    return load(path.resolve(__dirname + "/protos/DeviceInfoMessage.proto"))
-      .then(root => {
-        let type = root.lookupType('DeviceInfoMessage');
-        let message = type.create({
-          uniqueIdentifier: that.pairingId,
-          name: 'node-appletv',
-          localizedModelName: 'iPhone',
-          systemBuildVersion: '14G60',
-          applicationBundleIdentifier: 'com.apple.TVRemote',
-          applicationBundleVersion: '273.12',
-          protocolVersion: 1
-        });
-
-        return that
-          .sendMessage(message, true);
-      });
+    let body = {
+      uniqueIdentifier: this.pairingId,
+      name: 'node-appletv',
+      localizedModelName: 'iPhone',
+      systemBuildVersion: '14G60',
+      applicationBundleIdentifier: 'com.apple.TVRemote',
+      applicationBundleVersion: '273.12',
+      protocolVersion: 1
+    };
+    return this.sendMessage('DeviceInfoMessage', 'DeviceInfoMessage', body, true);
   }
 
   private sendConnectionState(): Promise<Message> {
@@ -320,37 +307,23 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
         });
 
         return that
-          .sendMessage(message, false);
+          .connection
+          .send(message, false, that.credentials);
       });
   }
 
   private sendClientUpdatesConfig(): Promise<Message> {
-    let that = this;
-    return load(path.resolve(__dirname + "/protos/ClientUpdatesConfigMessage.proto"))
-      .then(root => {
-        let type = root.lookupType('ClientUpdatesConfigMessage');
-        let message = type.create({
-          artworkUpdates: true,
-          nowPlayingUpdates: true,
-          volumeUpdates: true,
-          keyboardUpdates: true
-        });
-
-        return that
-          .sendMessage(message, false);
-      });
+    let message = {
+      artworkUpdates: true,
+      nowPlayingUpdates: true,
+      volumeUpdates: true,
+      keyboardUpdates: true
+    };
+    return this.sendMessage('ClientUpdatesConfigMessage', 'ClientUpdatesConfigMessage', message, false);
   }
 
   private sendWakeDevice(): Promise<Message> {
-    let that = this;
-    return load(path.resolve(__dirname + "/protos/WakeDeviceMessage.proto"))
-      .then(root => {
-        let type = root.lookupType('WakeDeviceMessage');
-        let message = type.create({});
-
-        return that
-          .sendMessage(message, false);
-      });
+    return this.sendMessage('WakeDeviceMessage', 'WakeDeviceMessage', {}, false);
   }
 }
 

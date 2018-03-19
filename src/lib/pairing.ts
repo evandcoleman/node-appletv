@@ -33,23 +33,18 @@ export class Pairing {
   */
   initiatePair(): Promise<(pin: string) => Promise<AppleTV>> {
     let that = this;
-    return load(path.resolve(__dirname + "/protos/CryptoPairingMessage.proto"))
-      .then(root => {
-        let type = root.lookupType('CryptoPairingMessage');
-        let tlvData = tlv.encode(
-          tlv.Tag.PairingMethod, 0x00,
-          tlv.Tag.Sequence, 0x01
-        );
-        let message = type.create({
-          status: 0,
-          pairingData: tlvData
-        });
-
-        return that.device
-          .sendMessage(message, false)
-          .then(() => {
-            return that.waitForSequence(0x02);
-          });
+    let tlvData = tlv.encode(
+      tlv.Tag.PairingMethod, 0x00,
+      tlv.Tag.Sequence, 0x01
+    );
+    let message = {
+      status: 0,
+      pairingData: tlvData
+    };
+    return this.device
+      .sendMessage('CryptoPairingMessage', 'CryptoPairingMessage', message, false)
+      .then(() => {
+        return that.waitForSequence(0x02);
       })
       .then(message => {
         let pairingData = message.payload.pairingData;
@@ -98,91 +93,87 @@ export class Pairing {
     // console.log("DEBUG: Client Public Key=" + this.publicKey.toString('hex') + "\nProof=" + this.proof.toString('hex'));
 
     let that = this;
-    return load(path.resolve(__dirname + "/protos/CryptoPairingMessage.proto"))
-      .then(root => {
-        let type = root.lookupType('CryptoPairingMessage');
-        let tlvData = tlv.encode(
-          tlv.Tag.Sequence, 0x03,
-          tlv.Tag.PublicKey, that.publicKey,
-          tlv.Tag.Proof, that.proof
+    let tlvData = tlv.encode(
+      tlv.Tag.Sequence, 0x03,
+      tlv.Tag.PublicKey, that.publicKey,
+      tlv.Tag.Proof, that.proof
+    );
+    let message = {
+      status: 0,
+      pairingData: tlvData
+    };
+
+    return this.device
+      .sendMessage('CryptoPairingMessage', 'CryptoPairingMessage', message, false)
+      .then(() => {
+        return that.waitForSequence(0x04);
+      })
+      .then(message => {
+        let pairingData = message.payload.pairingData;
+        that.deviceProof = tlv.decode(pairingData)[tlv.Tag.Proof];
+        // console.log("DEBUG: Device Proof=" + that.deviceProof.toString('hex'));
+
+        that.srp.checkM2(that.deviceProof);
+
+        let seed = crypto.randomBytes(32);
+        let keyPair = ed25519.MakeKeypair(seed);
+        let privateKey = keyPair.privateKey;
+        let publicKey = keyPair.publicKey;
+        let sharedSecret = that.srp.computeK();
+
+        let deviceHash = enc.HKDF(
+          "sha512",
+          Buffer.from("Pair-Setup-Controller-Sign-Salt"),
+          sharedSecret,
+          Buffer.from("Pair-Setup-Controller-Sign-Info"),
+          32
         );
-        let message = type.create({
+        let deviceInfo = Buffer.concat([deviceHash, Buffer.from(that.device.pairingId), publicKey]);
+        let deviceSignature = ed25519.Sign(deviceInfo, privateKey);
+        let encryptionKey = enc.HKDF(
+          "sha512",
+          Buffer.from("Pair-Setup-Encrypt-Salt"),
+          sharedSecret,
+          Buffer.from("Pair-Setup-Encrypt-Info"),
+          32
+        );
+
+        let tlvData = tlv.encode(
+          tlv.Tag.Username, Buffer.from(that.device.pairingId),
+          tlv.Tag.PublicKey, publicKey,
+          tlv.Tag.Signature, deviceSignature
+        );
+        let encryptedTLV = Buffer.concat(enc.encryptAndSeal(tlvData, null, Buffer.from('PS-Msg05'), encryptionKey));
+        // console.log("DEBUG: Encrypted Data=" + encryptedTLV.toString('hex'));
+        let outerTLV = tlv.encode(
+          tlv.Tag.Sequence, 0x05,
+          tlv.Tag.EncryptedData, encryptedTLV
+        );
+        let nextMessage = {
           status: 0,
-          pairingData: tlvData
-        });
+          pairingData: outerTLV
+        };
 
         return that.device
-          .sendMessage(message, false)
+          .sendMessage('CryptoPairingMessage', 'CryptoPairingMessage', nextMessage, false)
           .then(() => {
-            return that.waitForSequence(0x04);
+            return that.waitForSequence(0x06);
           })
           .then(message => {
-            let pairingData = message.payload.pairingData;
-            that.deviceProof = tlv.decode(pairingData)[tlv.Tag.Proof];
-            // console.log("DEBUG: Device Proof=" + that.deviceProof.toString('hex'));
-
-            that.srp.checkM2(that.deviceProof);
-
-            let seed = crypto.randomBytes(32);
-            let keyPair = ed25519.MakeKeypair(seed);
-            let privateKey = keyPair.privateKey;
-            let publicKey = keyPair.publicKey;
-            let sharedSecret = that.srp.computeK();
-
-            let deviceHash = enc.HKDF(
-              "sha512",
-              Buffer.from("Pair-Setup-Controller-Sign-Salt"),
-              sharedSecret,
-              Buffer.from("Pair-Setup-Controller-Sign-Info"),
-              32
-            );
-            let deviceInfo = Buffer.concat([deviceHash, Buffer.from(that.device.pairingId), publicKey]);
-            let deviceSignature = ed25519.Sign(deviceInfo, privateKey);
-            let encryptionKey = enc.HKDF(
-              "sha512",
-              Buffer.from("Pair-Setup-Encrypt-Salt"),
-              sharedSecret,
-              Buffer.from("Pair-Setup-Encrypt-Info"),
-              32
+            let encryptedData = tlv.decode(message.payload.pairingData)[tlv.Tag.EncryptedData];
+            let cipherText = encryptedData.slice(0, -16);
+            let hmac = encryptedData.slice(-16);
+            let decrpytedData = enc.verifyAndDecrypt(cipherText, hmac, null, Buffer.from('PS-Msg06'), encryptionKey);
+            let tlvData = tlv.decode(decrpytedData);
+            that.device.credentials = new Credentials(
+              that.device.uid,
+              tlvData[tlv.Tag.Username],
+              that.device.pairingId,
+              tlvData[tlv.Tag.PublicKey],
+              seed
             );
 
-            let tlvData = tlv.encode(
-              tlv.Tag.Username, Buffer.from(that.device.pairingId),
-              tlv.Tag.PublicKey, publicKey,
-              tlv.Tag.Signature, deviceSignature
-            );
-            let encryptedTLV = Buffer.concat(enc.encryptAndSeal(tlvData, null, Buffer.from('PS-Msg05'), encryptionKey));
-            // console.log("DEBUG: Encrypted Data=" + encryptedTLV.toString('hex'));
-            let outerTLV = tlv.encode(
-              tlv.Tag.Sequence, 0x05,
-              tlv.Tag.EncryptedData, encryptedTLV
-            );
-            let nextMessage = type.create({
-              status: 0,
-              pairingData: outerTLV
-            });
-
-            return that.device
-              .sendMessage(nextMessage, false)
-              .then(() => {
-                return that.waitForSequence(0x06);
-              })
-              .then(message => {
-                let encryptedData = tlv.decode(message.payload.pairingData)[tlv.Tag.EncryptedData];
-                let cipherText = encryptedData.slice(0, -16);
-                let hmac = encryptedData.slice(-16);
-                let decrpytedData = enc.verifyAndDecrypt(cipherText, hmac, null, Buffer.from('PS-Msg06'), encryptionKey);
-                let tlvData = tlv.decode(decrpytedData);
-                that.device.credentials = new Credentials(
-                  that.device.uid,
-                  tlvData[tlv.Tag.Username],
-                  that.device.pairingId,
-                  tlvData[tlv.Tag.PublicKey],
-                  seed
-                );
-
-                return that.device;
-              });
+            return that.device;
           });
       });
   }

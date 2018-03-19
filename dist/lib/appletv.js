@@ -149,12 +149,22 @@ class AppleTV extends typed_events_1.default {
     }
     /**
     * Send a Protobuf message to the AppleTV. This is for advanced usage only.
-    * @param message  The Protobuf message to send.
+    * @param definitionFilename  The Protobuf filename of the message type.
+    * @param messageType  The name of the message.
+    * @param body  The message body
+    * @param waitForResponse  Whether or not to wait for a response before resolving the Promise.
     * @returns A promise that resolves to the response from the AppleTV.
     */
-    sendMessage(message, waitForResponse) {
-        return this.connection
-            .send(message, waitForResponse, this.credentials);
+    sendMessage(definitionFilename, messageType, body, waitForResponse) {
+        return protobufjs_1.load(path.resolve(__dirname + "/protos/" + definitionFilename + ".proto"))
+            .then(root => {
+            let type = root.lookupType(messageType);
+            return type.create(body);
+        })
+            .then(message => {
+            return this.connection
+                .send(message, waitForResponse, this.credentials);
+        });
     }
     /**
     * Requests the current playback queue from the Apple TV.
@@ -201,67 +211,47 @@ class AppleTV extends typed_events_1.default {
         });
     }
     sendKeyPress(usePage, usage, down) {
+        let time = Buffer.from('438922cf08020000', 'hex');
+        let data = Buffer.concat([
+            number_1.default.UInt16toBufferBE(usePage),
+            number_1.default.UInt16toBufferBE(usage),
+            down ? number_1.default.UInt16toBufferBE(1) : number_1.default.UInt16toBufferBE(0)
+        ]);
+        let body = {
+            hidEventData: Buffer.concat([
+                time,
+                Buffer.from('00000000000000000100000000000000020' + '00000200000000300000001000000000000', 'hex'),
+                data,
+                Buffer.from('0000000000000001000000', 'hex')
+            ])
+        };
         let that = this;
-        return protobufjs_1.load(path.resolve(__dirname + "/protos/SendHIDEventMessage.proto"))
-            .then(root => {
-            let time = Buffer.from('438922cf08020000', 'hex');
-            let data = Buffer.concat([
-                number_1.default.UInt16toBufferBE(usePage),
-                number_1.default.UInt16toBufferBE(usage),
-                down ? number_1.default.UInt16toBufferBE(1) : number_1.default.UInt16toBufferBE(0)
-            ]);
-            let type = root.lookupType('SendHIDEventMessage');
-            let message = type.create({
-                hidEventData: Buffer.concat([
-                    time,
-                    Buffer.from('00000000000000000100000000000000020' + '00000200000000300000001000000000000', 'hex'),
-                    data,
-                    Buffer.from('0000000000000001000000', 'hex')
-                ])
-            });
-            return that.sendMessage(message, false)
-                .then(() => {
-                return that;
-            });
+        return this.sendMessage("SendHIDEventMessage", "SendHIDEventMessage", body, false)
+            .then(() => {
+            return that;
         });
     }
     requestPlaybackQueueWithWait(options, waitForResponse) {
-        let that = this;
-        return protobufjs_1.load(path.resolve(__dirname + "/protos/PlaybackQueueRequestMessage.proto"))
-            .then(root => {
-            let type = root.lookupType('PlaybackQueueRequestMessage');
-            var params = options;
-            params.requestID = uuid_1.v4();
-            if (options.artworkSize) {
-                params.artworkWidth = options.artworkSize.width;
-                params.artworkHeight = options.artworkSize.height;
-                delete params.artworkSize;
-            }
-            let message = type.create(params);
-            return that
-                .sendMessage(message, waitForResponse)
-                .then(message => {
-                return message;
-            });
-        });
+        var params = options;
+        params.requestID = uuid_1.v4();
+        if (options.artworkSize) {
+            params.artworkWidth = options.artworkSize.width;
+            params.artworkHeight = options.artworkSize.height;
+            delete params.artworkSize;
+        }
+        return this.sendMessage("PlaybackQueueRequestMessage", "PlaybackQueueRequestMessage", params, waitForResponse);
     }
     sendIntroduction() {
-        let that = this;
-        return protobufjs_1.load(path.resolve(__dirname + "/protos/DeviceInfoMessage.proto"))
-            .then(root => {
-            let type = root.lookupType('DeviceInfoMessage');
-            let message = type.create({
-                uniqueIdentifier: that.pairingId,
-                name: 'node-appletv',
-                localizedModelName: 'iPhone',
-                systemBuildVersion: '14G60',
-                applicationBundleIdentifier: 'com.apple.TVRemote',
-                applicationBundleVersion: '273.12',
-                protocolVersion: 1
-            });
-            return that
-                .sendMessage(message, true);
-        });
+        let body = {
+            uniqueIdentifier: this.pairingId,
+            name: 'node-appletv',
+            localizedModelName: 'iPhone',
+            systemBuildVersion: '14G60',
+            applicationBundleIdentifier: 'com.apple.TVRemote',
+            applicationBundleVersion: '273.12',
+            protocolVersion: 1
+        };
+        return this.sendMessage('DeviceInfoMessage', 'DeviceInfoMessage', body, true);
     }
     sendConnectionState() {
         let that = this;
@@ -273,33 +263,21 @@ class AppleTV extends typed_events_1.default {
                 state: stateEnum.values['Connected']
             });
             return that
-                .sendMessage(message, false);
+                .connection
+                .send(message, false, that.credentials);
         });
     }
     sendClientUpdatesConfig() {
-        let that = this;
-        return protobufjs_1.load(path.resolve(__dirname + "/protos/ClientUpdatesConfigMessage.proto"))
-            .then(root => {
-            let type = root.lookupType('ClientUpdatesConfigMessage');
-            let message = type.create({
-                artworkUpdates: true,
-                nowPlayingUpdates: true,
-                volumeUpdates: true,
-                keyboardUpdates: true
-            });
-            return that
-                .sendMessage(message, false);
-        });
+        let message = {
+            artworkUpdates: true,
+            nowPlayingUpdates: true,
+            volumeUpdates: true,
+            keyboardUpdates: true
+        };
+        return this.sendMessage('ClientUpdatesConfigMessage', 'ClientUpdatesConfigMessage', message, false);
     }
     sendWakeDevice() {
-        let that = this;
-        return protobufjs_1.load(path.resolve(__dirname + "/protos/WakeDeviceMessage.proto"))
-            .then(root => {
-            let type = root.lookupType('WakeDeviceMessage');
-            let message = type.create({});
-            return that
-                .sendMessage(message, false);
-        });
+        return this.sendMessage('WakeDeviceMessage', 'WakeDeviceMessage', {}, false);
     }
 }
 exports.AppleTV = AppleTV;

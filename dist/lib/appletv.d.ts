@@ -1,6 +1,5 @@
 /// <reference types="mdns" />
 import { Service } from 'mdns';
-import { Message as ProtoMessage } from 'protobufjs';
 import { Credentials } from './credentials';
 import { NowPlayingInfo } from './now-playing-info';
 import { SupportedCommand } from './supported-command';
@@ -45,10 +44,13 @@ export declare class AppleTV extends TypedEventEmitter<AppleTV.Events> {
     closeConnection(): void;
     /**
     * Send a Protobuf message to the AppleTV. This is for advanced usage only.
-    * @param message  The Protobuf message to send.
+    * @param definitionFilename  The Protobuf filename of the message type.
+    * @param messageType  The name of the message.
+    * @param body  The message body
+    * @param waitForResponse  Whether or not to wait for a response before resolving the Promise.
     * @returns A promise that resolves to the response from the AppleTV.
     */
-    sendMessage(message: ProtoMessage<{}>, waitForResponse: boolean): Promise<Message>;
+    sendMessage(definitionFilename: string, messageType: string, body: {}, waitForResponse: boolean): Promise<Message>;
     /**
     * Requests the current playback queue from the Apple TV.
     * @param options Options to send

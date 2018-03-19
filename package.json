@@ -13,7 +13,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "prepublish": "npm run build && npm run docs",
+    "prepublish": "npm run build",
     "build": "npm run clean && tsc && cp -R ./src/lib/protos ./dist/lib/protos",
     "clean": "rimraf dist",
     "docs": "rimraf docs && typedoc --mode modules --excludePrivate --excludeExternals --out ./docs ./src"
