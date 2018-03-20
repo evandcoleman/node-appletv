@@ -1,5 +1,4 @@
 import * as srp from 'fast-srp-hap';
-import { api as Sodium } from 'sodium';
 import { v4 as uuid } from 'uuid';
 import { load } from 'protobufjs';
 import * as path from 'path';

@@ -2,7 +2,6 @@ import { load } from 'protobufjs';
 import * as path from 'path';
 import * as ed25519 from 'ed25519';
 import * as crypto from 'crypto';
-import { api as Sodium } from 'sodium';
 import * as curve25519 from 'curve25519-n2';
 
 import { AppleTV } from './appletv';
