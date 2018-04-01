@@ -34,10 +34,13 @@ export class Pairing {
     let that = this;
     let tlvData = tlv.encode(
       tlv.Tag.PairingMethod, 0x00,
-      tlv.Tag.Sequence, 0x01
+      tlv.Tag.Sequence, 0x01,
     );
     let message = {
       status: 0,
+      isUsingSystemPairing: true,
+      isRetrying: true,
+      state: 2,
       pairingData: tlvData
     };
     return this.device

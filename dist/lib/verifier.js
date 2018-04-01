@@ -17,6 +17,9 @@ class Verifier {
         let tlvData = tlv_1.default.encode(tlv_1.default.Tag.Sequence, 0x01, tlv_1.default.Tag.PublicKey, verifyPublic);
         let message = {
             status: 0,
+            state: 3,
+            isRetrying: true,
+            isUsingSystemPairing: true,
             pairingData: tlvData
         };
         return that.device
@@ -55,6 +58,9 @@ class Verifier {
             let outerTLV = tlv_1.default.encode(tlv_1.default.Tag.Sequence, 0x03, tlv_1.default.Tag.EncryptedData, encryptedTLV);
             let newMessage = {
                 status: 0,
+                state: 3,
+                isRetrying: false,
+                isUsingSystemPairing: true,
                 pairingData: outerTLV
             };
             return that.device

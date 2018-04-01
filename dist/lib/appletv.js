@@ -70,11 +70,7 @@ class AppleTV extends typed_events_1.default {
                     if (that.connection.isOpen) {
                         that.requestPlaybackQueueWithWait({
                             length: 1,
-                            location: 0,
-                            artworkSize: {
-                                width: -1,
-                                height: 368
-                            }
+                            location: 0
                         }, false).then(() => { }).catch(error => { });
                     }
                 }, 2000);
@@ -248,8 +244,11 @@ class AppleTV extends typed_events_1.default {
             localizedModelName: 'iPhone',
             systemBuildVersion: '14G60',
             applicationBundleIdentifier: 'com.apple.TVRemote',
-            applicationBundleVersion: '273.12',
-            protocolVersion: 1
+            applicationBundleVersion: '320.15',
+            protocolVersion: 1,
+            allowsPairing: true,
+            lastSupportedMessageType: 45,
+            supportsSystemPairing: true,
         };
         return this.sendMessage('DeviceInfoMessage', 'DeviceInfoMessage', body, true);
     }

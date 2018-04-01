@@ -21,6 +21,9 @@ class Pairing {
         let tlvData = tlv_1.default.encode(tlv_1.default.Tag.PairingMethod, 0x00, tlv_1.default.Tag.Sequence, 0x01);
         let message = {
             status: 0,
+            isUsingSystemPairing: true,
+            isRetrying: true,
+            state: 2,
             pairingData: tlvData
         };
         return this.device

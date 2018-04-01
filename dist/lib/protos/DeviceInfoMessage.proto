@@ -14,4 +14,7 @@ message DeviceInfoMessage {
   required string applicationBundleIdentifier = 5; // Example: com.example.myremote
   optional string applicationBundleVersion = 6; // Example: 107
   required int32 protocolVersion = 7; // Example: 1
+  optional int32 lastSupportedMessageType = 8;
+  optional bool allowsPairing = 9;
+  optional bool supportsSystemPairing = 10;
 }

@@ -27,6 +27,9 @@ export class Verifier {
     );
     let message = {
       status: 0,
+      state: 3,
+      isRetrying: true,
+      isUsingSystemPairing: true,
       pairingData: tlvData
     };
 
@@ -83,6 +86,9 @@ export class Verifier {
         );
         let newMessage = {
           status: 0,
+          state: 3,
+          isRetrying: false,
+          isUsingSystemPairing: true,
           pairingData: outerTLV
         };
 
