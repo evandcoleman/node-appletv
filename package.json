@@ -1,6 +1,6 @@
 {
   "name": "node-appletv",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A Node.js library for communicating with an Apple TV",
   "homepage": "https://github.com/edc1591/node-appletv",
   "bugs": "https://github.com/edc1591/node-appletv/issues",
@@ -13,7 +13,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "prepublish": "npm run build",
+    "prepare": "npm run build",
     "build": "npm run clean && tsc && cp -R ./src/lib/protos ./dist/lib/protos",
     "clean": "rimraf dist",
     "docs": "rimraf docs && typedoc --mode modules --excludePrivate --excludeExternals --out ./docs ./src"

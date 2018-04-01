@@ -9,7 +9,7 @@ import { scan } from './scan';
 import { pair } from './pair';
 
 cli
-  .version('1.0.4')
+  .version('1.0.5')
   .command('pair', 'Pair with an Apple TV')
   .option('--timeout <timeout>', 'The amount of time (in seconds) to scan for Apple TVs', cli.INTEGER) 
   .action((args, options, logger) => {
@@ -36,7 +36,6 @@ cli
   });
 
 cli
-  .version('1.0.4')
   .command('command', 'Send a command to an Apple TV')
   .argument('<command>', 'The command to send', /^up|down|left|right|menu|play|pause|next|previous|suspend$/)
   .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
@@ -74,7 +73,6 @@ cli
   });
 
 cli
-  .version('1.0.4')
   .command('state', 'Logs the playback state from the Apple TV')
   .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
   .action((args, options, logger) => {
@@ -108,7 +106,6 @@ cli
   });
 
 cli
-  .version('1.0.4')
   .command('queue', 'Request the playback state from the Apple TV')
   .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
   .option('--location <location>', 'The location in the queue', cli.INTEGER) 
@@ -155,7 +152,6 @@ cli
   });
 
 cli
-  .version('1.0.4')
   .command('messages', 'Log all messages sent from the Apple TV')
   .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
   .action((args, options, logger) => {
