@@ -3,6 +3,7 @@
 > A node module for interacting with an Apple TV (4th-generation or later) over the Media Remote Protocol.
 
 [![npm version](https://badge.fury.io/js/node-appletv.svg)](https://badge.fury.io/js/node-appletv)
+[![CI](https://travis-ci.org/edc1591/node-appletv.svg?branch=master)](https://travis-ci.org/edc1591/node-appletv)
 [![License][license-image]][license-url]
 
 ![](images/pairing.gif)
