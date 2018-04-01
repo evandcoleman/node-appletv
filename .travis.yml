@@ -4,5 +4,7 @@ node_js:
 cache:
   directories:
     - "node_modules"
+before_install:
+  - sudo apt-get install libavahi-compat-libdnssd-dev
 script:
   - npm run build
