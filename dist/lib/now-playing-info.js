@@ -23,9 +23,9 @@ class NowPlayingInfo {
     }
     percentCompleted() {
         if (!this.elapsedTime || !this.duration) {
-            return 0;
+            return "0.00";
         }
-        return Math.floor((this.elapsedTime / this.duration) * 100);
+        return ((this.elapsedTime / this.duration) * 100).toPrecision(3);
     }
     toString() {
         if (this.artist) {

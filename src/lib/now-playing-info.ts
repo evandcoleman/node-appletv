@@ -28,10 +28,10 @@ export class NowPlayingInfo {
     }
   }
 
-  public percentCompleted(): number {
-    if (!this.elapsedTime || !this.duration) { return 0; }
+  public percentCompleted(): string {
+    if (!this.elapsedTime || !this.duration) { return "0.00"; }
 
-    return Math.floor((this.elapsedTime / this.duration) * 100);
+    return ((this.elapsedTime / this.duration) * 100).toPrecision(3);
   }
 
   public toString(): string {
