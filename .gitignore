@@ -61,3 +61,5 @@ typings/
 .next
 test.ts
 test
+
+.DS_Store
