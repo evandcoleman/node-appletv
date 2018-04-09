@@ -138,14 +138,14 @@ export class Connection extends TypedEventEmitter<Connection.Events> {
       });
   }
 
-  send(message: ProtoMessage<{}>, waitForResponse: boolean, credentials?: Credentials): Promise<Message> {
+  send(message: ProtoMessage<{}>, waitForResponse: boolean, priority: number, credentials?: Credentials): Promise<Message> {
     let ProtocolMessage = message.$type.parent['ProtocolMessage'];
     let types = ProtocolMessage.lookupEnum("Type");
     let name = message.$type.name;
     let typeName = snake(name).toUpperCase();
     let type = types.values[typeName];
     var outerMessage = ProtocolMessage.create({
-      priority: 0,
+      priority: priority,
       type: type
     });
     if (Object.keys(message.toJSON()).length > 0) {

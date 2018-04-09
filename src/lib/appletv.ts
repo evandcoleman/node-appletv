@@ -186,7 +186,7 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
   * @param waitForResponse  Whether or not to wait for a response before resolving the Promise.
   * @returns A promise that resolves to the response from the AppleTV.
   */
-  sendMessage(definitionFilename: string, messageType: string, body: {}, waitForResponse: boolean): Promise<Message> {
+  sendMessage(definitionFilename: string, messageType: string, body: {}, waitForResponse: boolean, priority: number = 0): Promise<Message> {
     return load(path.resolve(__dirname + "/protos/" + definitionFilename + ".proto"))
       .then(root => {
         let type = root.lookupType(messageType);
@@ -194,7 +194,9 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
       })
       .then(message => {
         return this.connection
-          .send(message, waitForResponse, this.credentials);
+          .send(message, waitForResponse, priority, this.credentials);
+      });
+  }
       });
   }
 
@@ -307,7 +309,7 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
 
         return that
           .connection
-          .send(message, false, that.credentials);
+          .send(message, false, 0, that.credentials);
       });
   }
 

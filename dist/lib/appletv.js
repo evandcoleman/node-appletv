@@ -151,7 +151,7 @@ class AppleTV extends typed_events_1.default {
     * @param waitForResponse  Whether or not to wait for a response before resolving the Promise.
     * @returns A promise that resolves to the response from the AppleTV.
     */
-    sendMessage(definitionFilename, messageType, body, waitForResponse) {
+    sendMessage(definitionFilename, messageType, body, waitForResponse, priority = 0) {
         return protobufjs_1.load(path.resolve(__dirname + "/protos/" + definitionFilename + ".proto"))
             .then(root => {
             let type = root.lookupType(messageType);
@@ -159,7 +159,9 @@ class AppleTV extends typed_events_1.default {
         })
             .then(message => {
             return this.connection
-                .send(message, waitForResponse, this.credentials);
+                .send(message, waitForResponse, priority, this.credentials);
+        });
+    }
         });
     }
     /**
@@ -263,7 +265,7 @@ class AppleTV extends typed_events_1.default {
             });
             return that
                 .connection
-                .send(message, false, that.credentials);
+                .send(message, false, 0, that.credentials);
         });
     }
     sendClientUpdatesConfig() {

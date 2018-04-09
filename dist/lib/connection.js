@@ -114,14 +114,14 @@ class Connection extends typed_events_1.default {
             return that.sendProtocolMessage(message, name, type, waitForResponse, credentials);
         });
     }
-    send(message, waitForResponse, credentials) {
+    send(message, waitForResponse, priority, credentials) {
         let ProtocolMessage = message.$type.parent['ProtocolMessage'];
         let types = ProtocolMessage.lookupEnum("Type");
         let name = message.$type.name;
         let typeName = snake(name).toUpperCase();
         let type = types.values[typeName];
         var outerMessage = ProtocolMessage.create({
-            priority: 0,
+            priority: priority,
             type: type
         });
         if (Object.keys(message.toJSON()).length > 0) {
