@@ -197,8 +197,6 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
           .send(message, waitForResponse, priority, this.credentials);
       });
   }
-      });
-  }
 
   /**
   * Requests the current playback queue from the Apple TV.
