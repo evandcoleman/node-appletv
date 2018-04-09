@@ -50,7 +50,7 @@ export declare class AppleTV extends TypedEventEmitter<AppleTV.Events> {
     * @param waitForResponse  Whether or not to wait for a response before resolving the Promise.
     * @returns A promise that resolves to the response from the AppleTV.
     */
-    sendMessage(definitionFilename: string, messageType: string, body: {}, waitForResponse: boolean): Promise<Message>;
+    sendMessage(definitionFilename: string, messageType: string, body: {}, waitForResponse: boolean, priority?: number): Promise<Message>;
     /**
     * Requests the current playback queue from the Apple TV.
     * @param options Options to send

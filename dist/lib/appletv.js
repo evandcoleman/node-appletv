@@ -162,8 +162,6 @@ class AppleTV extends typed_events_1.default {
                 .send(message, waitForResponse, priority, this.credentials);
         });
     }
-        });
-    }
     /**
     * Requests the current playback queue from the Apple TV.
     * @param options Options to send
