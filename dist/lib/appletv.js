@@ -73,7 +73,7 @@ class AppleTV extends typed_events_1.default {
                             location: 0
                         }, false).then(() => { }).catch(error => { });
                     }
-                }, 2000);
+                }, 1000);
             }
         });
         this._on('removeListener', (event, listener) => {
