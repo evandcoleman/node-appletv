@@ -5,3 +5,7 @@ import "ProtocolMessage.proto";
 extend ProtocolMessage {
   optional string getKeyboardSessionMessage = 29;
 }
+
+message GetKeyboardSessionMessage {
+  
+}

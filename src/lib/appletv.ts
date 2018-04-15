@@ -33,6 +33,13 @@ export interface PlaybackQueueRequestOptions {
   artworkSize?: Size;
 }
 
+export interface ClientUpdatesConfig {
+  artworkUpdates: boolean;
+  nowPlayingUpdates: boolean;
+  volumeUpdates: boolean;
+  keyboardUpdates: boolean;
+}
+
 export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
   public name: string;
   public address: string;
@@ -100,11 +107,15 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
         queuePollTimer = setInterval(() => {
           if (that.connection.isOpen) {
             that.requestPlaybackQueueWithWait({
-              length: 1,
-              location: 0
+              length: 100,
+              location: 0,
+              artworkSize: {
+                width: -1,
+                height: 368
+              }
             }, false).then(() => {}).catch(error => {});
           }
-        }, 1000);
+        }, 5000);
       }
     });
     this._on('removeListener', (event, listener) => {
@@ -161,7 +172,12 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
       })
       .then(() => {
         if (credentials) {
-          return that.sendClientUpdatesConfig();
+          return that.sendClientUpdatesConfig({
+            nowPlayingUpdates: true,
+            artworkUpdates: true,
+            keyboardUpdates: false,
+            volumeUpdates: false
+          });
         } else {
           return null;
         }
@@ -196,6 +212,30 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
         return this.connection
           .send(message, waitForResponse, priority, this.credentials);
       });
+  }
+
+  /**
+  * Wait for a single message of a specified type.
+  * @param type  The type of the message to wait for.
+  * @param timeout  The timeout (in seconds).
+  * @returns A promise that resolves to the Message.
+  */
+  messageOfType(type: Message.Type, timeout: number = 5): Promise<Message> {
+    let that = this;
+    return new Promise<Message>((resolve, reject) => {
+      let listener: (message: Message) => void;
+      let timer = setTimeout(() => {
+        reject(new Error("Timed out waiting for message type " + type));
+        that.removeListener('message', listener);
+      }, timeout * 1000);
+      listener = (message: Message) => {
+        if (message.type == type) {
+          resolve(message);
+          that.removeListener('message', listener);
+        }
+      };
+      that.on('message', listener);
+    });
   }
 
   /**
@@ -286,7 +326,7 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
       localizedModelName: 'iPhone',
       systemBuildVersion: '14G60',
       applicationBundleIdentifier: 'com.apple.TVRemote',
-      applicationBundleVersion: '320.15',
+      applicationBundleVersion: '320.18',
       protocolVersion: 1,
       allowsPairing: true,
       lastSupportedMessageType: 45,
@@ -311,14 +351,8 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
       });
   }
 
-  private sendClientUpdatesConfig(): Promise<Message> {
-    let message = {
-      artworkUpdates: true,
-      nowPlayingUpdates: true,
-      volumeUpdates: true,
-      keyboardUpdates: true
-    };
-    return this.sendMessage('ClientUpdatesConfigMessage', 'ClientUpdatesConfigMessage', message, false);
+  private sendClientUpdatesConfig(config: ClientUpdatesConfig): Promise<Message> {
+    return this.sendMessage('ClientUpdatesConfigMessage', 'ClientUpdatesConfigMessage', config, false);
   }
 
   private sendWakeDevice(): Promise<Message> {

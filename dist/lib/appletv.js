@@ -69,11 +69,15 @@ class AppleTV extends typed_events_1.default {
                 queuePollTimer = setInterval(() => {
                     if (that.connection.isOpen) {
                         that.requestPlaybackQueueWithWait({
-                            length: 1,
-                            location: 0
+                            length: 100,
+                            location: 0,
+                            artworkSize: {
+                                width: -1,
+                                height: 368
+                            }
                         }, false).then(() => { }).catch(error => { });
                     }
-                }, 1000);
+                }, 5000);
             }
         });
         this._on('removeListener', (event, listener) => {
@@ -127,7 +131,12 @@ class AppleTV extends typed_events_1.default {
         })
             .then(() => {
             if (credentials) {
-                return that.sendClientUpdatesConfig();
+                return that.sendClientUpdatesConfig({
+                    nowPlayingUpdates: true,
+                    artworkUpdates: true,
+                    keyboardUpdates: false,
+                    volumeUpdates: false
+                });
             }
             else {
                 return null;
@@ -160,6 +169,29 @@ class AppleTV extends typed_events_1.default {
             .then(message => {
             return this.connection
                 .send(message, waitForResponse, priority, this.credentials);
+        });
+    }
+    /**
+    * Wait for a single message of a specified type.
+    * @param type  The type of the message to wait for.
+    * @param timeout  The timeout (in seconds).
+    * @returns A promise that resolves to the Message.
+    */
+    messageOfType(type, timeout = 5) {
+        let that = this;
+        return new Promise((resolve, reject) => {
+            let listener;
+            let timer = setTimeout(() => {
+                reject(new Error("Timed out waiting for message type " + type));
+                that.removeListener('message', listener);
+            }, timeout * 1000);
+            listener = (message) => {
+                if (message.type == type) {
+                    resolve(message);
+                    that.removeListener('message', listener);
+                }
+            };
+            that.on('message', listener);
         });
     }
     /**
@@ -244,7 +276,7 @@ class AppleTV extends typed_events_1.default {
             localizedModelName: 'iPhone',
             systemBuildVersion: '14G60',
             applicationBundleIdentifier: 'com.apple.TVRemote',
-            applicationBundleVersion: '320.15',
+            applicationBundleVersion: '320.18',
             protocolVersion: 1,
             allowsPairing: true,
             lastSupportedMessageType: 45,
@@ -266,14 +298,8 @@ class AppleTV extends typed_events_1.default {
                 .send(message, false, 0, that.credentials);
         });
     }
-    sendClientUpdatesConfig() {
-        let message = {
-            artworkUpdates: true,
-            nowPlayingUpdates: true,
-            volumeUpdates: true,
-            keyboardUpdates: true
-        };
-        return this.sendMessage('ClientUpdatesConfigMessage', 'ClientUpdatesConfigMessage', message, false);
+    sendClientUpdatesConfig(config) {
+        return this.sendMessage('ClientUpdatesConfigMessage', 'ClientUpdatesConfigMessage', config, false);
     }
     sendWakeDevice() {
         return this.sendMessage('WakeDeviceMessage', 'WakeDeviceMessage', {}, false);

@@ -17,6 +17,12 @@ export interface PlaybackQueueRequestOptions {
     includeLyrics?: boolean;
     artworkSize?: Size;
 }
+export interface ClientUpdatesConfig {
+    artworkUpdates: boolean;
+    nowPlayingUpdates: boolean;
+    volumeUpdates: boolean;
+    keyboardUpdates: boolean;
+}
 export declare class AppleTV extends TypedEventEmitter<AppleTV.Events> {
     private service;
     name: string;
@@ -52,6 +58,13 @@ export declare class AppleTV extends TypedEventEmitter<AppleTV.Events> {
     */
     sendMessage(definitionFilename: string, messageType: string, body: {}, waitForResponse: boolean, priority?: number): Promise<Message>;
     /**
+    * Wait for a single message of a specified type.
+    * @param type  The type of the message to wait for.
+    * @param timeout  The timeout (in seconds).
+    * @returns A promise that resolves to the Message.
+    */
+    messageOfType(type: Message.Type, timeout?: number): Promise<Message>;
+    /**
     * Requests the current playback queue from the Apple TV.
     * @param options Options to send
     * @returns A Promise that resolves to a NewPlayingInfo object.
@@ -68,7 +81,7 @@ export declare class AppleTV extends TypedEventEmitter<AppleTV.Events> {
     private requestPlaybackQueueWithWait(options, waitForResponse);
     private sendIntroduction();
     private sendConnectionState();
-    private sendClientUpdatesConfig();
+    private sendClientUpdatesConfig(config);
     private sendWakeDevice();
 }
 export declare module AppleTV {
