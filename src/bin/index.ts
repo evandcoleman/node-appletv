@@ -9,7 +9,7 @@ import { scan } from './scan';
 import { pair } from './pair';
 
 cli
-  .version('1.0.7')
+  .version('1.0.8')
   .command('pair', 'Pair with an Apple TV')
   .option('--timeout <timeout>', 'The amount of time (in seconds) to scan for Apple TVs', cli.INTEGER) 
   .action((args, options, logger) => {
