@@ -28,6 +28,39 @@ $ npm install -g node-appletv
 $ appletv --help
 ```
 
+**Note** If you're getting an installation error such as below:
+```bash
+> sodium@2.0.3 preinstall /usr/lib/node_modules/node-appletv/node_modules/sodium
+> node install.js --preinstall
+
+Static libsodium was not found at /usr/lib/node_modules/node-appletv/node_modules/sodium/deps/build/lib/libsodium so compiling libsodium from source.
+libtoolize:   error: Failed to create 'build-aux'
+make: *** [libsodium] Error 1
+Makefile:61: recipe for target 'libsodium' failed
+/usr/lib/node_modules/node-appletv/node_modules/sodium/install.js:287
+            throw new Error(cmdLine + ' exited with code ' + code);
+            ^
+
+Error: make libsodium exited with code 2
+    at ChildProcess.<anonymous> (/usr/lib/node_modules/node-appletv/node_modules/sodium/install.js:287:19)
+    at ChildProcess.emit (events.js:180:13)
+    at Process.ChildProcess._handle.onexit (internal/child_process.js:209:12)
+npm ERR! code ELIFECYCLE
+npm ERR! errno 1
+npm ERR! sodium@2.0.3 preinstall: `node install.js --preinstall`
+npm ERR! Exit status 1
+npm ERR!
+npm ERR! Failed at the sodium@2.0.3 preinstall script.
+npm ERR! This is probably not a problem with npm. There is likely additional logging output above.
+
+npm ERR! A complete log of this run can be found in:
+npm ERR!     /root/.npm/_logs/2018-05-10T04_39_57_013Z-debug.log
+```
+You can workaround the issue by installing with the following command:
+```bash
+sudo npm install -g node-appletv --unsafe-perm
+```
+
 The `appletv` cli supports several commands, such as:
 
 `pair`: Scans for Apple TVs on the local network and initiates the pairing process
