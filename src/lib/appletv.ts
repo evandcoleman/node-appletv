@@ -274,6 +274,8 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
         return this.sendKeyPressAndRelease(12, 0xB6);
       case AppleTV.Key.Suspend:
         return this.sendKeyPressAndRelease(1, 0x82);
+      case AppleTV.Key.Select:
+        return this.sendKeyPressAndRelease(1, 0x89);
     }
   }
 
@@ -386,7 +388,8 @@ export module AppleTV {
     Pause,
     Next,
     Previous,
-    Suspend
+    Suspend,
+    Select
   }
 
   /** Convert a string representation of a key to the correct enum type.
@@ -414,6 +417,8 @@ export module AppleTV {
       return AppleTV.Key.Previous;
     } else if (string == "suspend") {
       return AppleTV.Key.Suspend;
+    } else if (string == "select") {
+      return AppleTV.Key.Select;
     }
   }
 }
