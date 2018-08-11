@@ -229,6 +229,8 @@ class AppleTV extends typed_events_1.default {
                 return this.sendKeyPressAndRelease(12, 0xB6);
             case AppleTV.Key.Suspend:
                 return this.sendKeyPressAndRelease(1, 0x82);
+            case AppleTV.Key.Select:
+                return this.sendKeyPressAndRelease(1, 0x89);
         }
     }
     sendKeyPressAndRelease(usePage, usage) {
@@ -321,6 +323,7 @@ exports.AppleTV = AppleTV;
         Key[Key["Next"] = 7] = "Next";
         Key[Key["Previous"] = 8] = "Previous";
         Key[Key["Suspend"] = 9] = "Suspend";
+        Key[Key["Select"] = 10] = "Select";
     })(Key = AppleTV.Key || (AppleTV.Key = {}));
     /** Convert a string representation of a key to the correct enum type.
     * @param string  The string.
@@ -356,6 +359,9 @@ exports.AppleTV = AppleTV;
         }
         else if (string == "suspend") {
             return AppleTV.Key.Suspend;
+        }
+        else if (string == "select") {
+            return AppleTV.Key.Select;
         }
     }
     AppleTV.key = key;
