@@ -261,8 +261,8 @@ class AppleTV extends typed_events_1.default {
             return this.promiseTimeout(2000);
         })
         .then(() => {
-       return that.sendKeyPress(usePage, usage, false);
-   });
+            return that.sendKeyPress(usePage, usage, false);
+        });
     }
     sendKeyPress(usePage, usage, down) {
         let time = Buffer.from('438922cf08020000', 'hex');

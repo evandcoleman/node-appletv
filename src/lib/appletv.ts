@@ -276,16 +276,37 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
         return this.sendKeyPressAndRelease(1, 0x82);
       case AppleTV.Key.Select:
         return this.sendKeyPressAndRelease(1, 0x89);
+      case AppleTV.Key.LongTv:
+        return this.sendKeyHoldAndRelease(12, 0x60);
+      case AppleTV.Key.Tv:
+        return this.sendKeyPressAndRelease(12, 0x60);
     }
   }
 
-  private sendKeyPressAndRelease(usePage: number, usage: number): Promise<AppleTV> {
+    private promiseTimeout (time) {
+        return new Promise(function(resolve){
+            setTimeout(function(){resolve(time);},time);
+        });
+    };
+
+    private sendKeyPressAndRelease(usePage: number, usage: number): Promise<AppleTV> {
     let that = this;
     return this.sendKeyPress(usePage, usage, true)
-      .then(() => {
+        .then(() => {
+            return this.promiseTimeout(2000);
+        })
+        .then(() => {
         return that.sendKeyPress(usePage, usage, false);
       });
   }
+
+    private sendKeyHoldAndRelease(usePage: number, usage: number): Promise<AppleTV> {
+        let that = this;
+        return this.sendKeyPress(usePage, usage, true)
+            .then(() => {
+                return that.sendKeyPress(usePage, usage, false);
+            });
+    }
 
   private sendKeyPress(usePage: number, usage: number, down: boolean): Promise<AppleTV> {
     let time = Buffer.from('438922cf08020000', 'hex');
@@ -389,7 +410,9 @@ export module AppleTV {
     Next,
     Previous,
     Suspend,
-    Select
+    Select,
+    LongTv,
+    Tv
   }
 
   /** Convert a string representation of a key to the correct enum type.
@@ -419,6 +442,10 @@ export module AppleTV {
       return AppleTV.Key.Suspend;
     } else if (string == "select") {
       return AppleTV.Key.Select;
+    } else if (string == "longTv") {
+        return AppleTV.Key.LongTv;
+    } else if (string == "Tv") {
+        return AppleTV.Key.Tv;
     }
   }
 }
