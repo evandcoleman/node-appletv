@@ -218,7 +218,7 @@ class AppleTV extends typed_events_1.default {
             case AppleTV.Key.Right:
                 return this.sendKeyPressAndRelease(1, 0x8A);
             case AppleTV.Key.Menu:
-                return this.sendKeyPressAndRelease(1, 0x86);
+                return this.sendKeyHoldAndRelease(1, 0x86);
             case AppleTV.Key.Play:
                 return this.sendKeyPressAndRelease(12, 0xB0);
             case AppleTV.Key.Pause:
@@ -231,14 +231,38 @@ class AppleTV extends typed_events_1.default {
                 return this.sendKeyPressAndRelease(1, 0x82);
             case AppleTV.Key.Select:
                 return this.sendKeyPressAndRelease(1, 0x89);
+            case AppleTV.Key.LongTv:
+                return this.sendKeyHoldAndRelease(12, 0x60);
+            case AppleTV.Key.Tv:
+                return this.sendKeyPressAndRelease(12, 0x60);
         }
     }
+
+
+    promiseTimeout (time) {
+        return new Promise(function(resolve,reject){
+            setTimeout(function(){resolve(time);},time);
+        });
+    };
+
+
     sendKeyPressAndRelease(usePage, usage) {
         let that = this;
         return this.sendKeyPress(usePage, usage, true)
             .then(() => {
             return that.sendKeyPress(usePage, usage, false);
         });
+    }
+
+   sendKeyHoldAndRelease(usePage, usage) {
+        let that = this;
+        return this.sendKeyPress(usePage, usage, true)
+            .then(() => {
+            return this.promiseTimeout(2000);
+        })
+        .then(() => {
+       return that.sendKeyPress(usePage, usage, false);
+   });
     }
     sendKeyPress(usePage, usage, down) {
         let time = Buffer.from('438922cf08020000', 'hex');
@@ -324,6 +348,8 @@ exports.AppleTV = AppleTV;
         Key[Key["Previous"] = 8] = "Previous";
         Key[Key["Suspend"] = 9] = "Suspend";
         Key[Key["Select"] = 10] = "Select";
+        Key[Key["LongTv"] = 11] = "LongTv";
+        Key[Key["Tv"] = 12] = "Tv";
     })(Key = AppleTV.Key || (AppleTV.Key = {}));
     /** Convert a string representation of a key to the correct enum type.
     * @param string  The string.
@@ -362,6 +388,12 @@ exports.AppleTV = AppleTV;
         }
         else if (string == "select") {
             return AppleTV.Key.Select;
+        }
+        else if (string == "longTv") {
+            return AppleTV.Key.LongTv;
+        }
+        else if (string == "tv") {
+            return AppleTV.Key.Tv;
         }
     }
     AppleTV.key = key;
