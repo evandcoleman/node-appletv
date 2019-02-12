@@ -11,14 +11,14 @@ export declare class Connection extends TypedEventEmitter<Connection.Events> {
     private ProtocolMessage;
     private buffer;
     constructor(device: AppleTV);
-    private addCallback(identifier, callback);
-    private executeCallbacks(identifier, message);
+    private addCallback;
+    private executeCallbacks;
     open(): Promise<void>;
     close(): void;
     sendBlank(typeName: string, waitForResponse: boolean, credentials?: Credentials): Promise<Message>;
     send(message: ProtoMessage<{}>, waitForResponse: boolean, priority: number, credentials?: Credentials): Promise<Message>;
-    private sendProtocolMessage(message, name, type, waitForResponse, credentials?);
-    private decodeMessage(data);
+    private sendProtocolMessage;
+    private decodeMessage;
 }
 export declare module Connection {
     interface Events {

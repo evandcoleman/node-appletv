@@ -1,4 +1,3 @@
-/// <reference types="mdns" />
 import { Service } from 'mdns';
 import { Credentials } from './credentials';
 import { NowPlayingInfo } from './now-playing-info';
@@ -76,13 +75,13 @@ export declare class AppleTV extends TypedEventEmitter<AppleTV.Events> {
     * @returns A promise that resolves to the AppleTV object after the message has been sent.
     */
     sendKeyCommand(key: AppleTV.Key): Promise<AppleTV>;
-    private sendKeyPressAndRelease(usePage, usage);
-    private sendKeyPress(usePage, usage, down);
-    private requestPlaybackQueueWithWait(options, waitForResponse);
-    private sendIntroduction();
-    private sendConnectionState();
-    private sendClientUpdatesConfig(config);
-    private sendWakeDevice();
+    private sendKeyPressAndRelease;
+    private sendKeyPress;
+    private requestPlaybackQueueWithWait;
+    private sendIntroduction;
+    private sendConnectionState;
+    private sendClientUpdatesConfig;
+    private sendWakeDevice;
 }
 export declare module AppleTV {
     interface Events {
@@ -110,7 +109,7 @@ export declare module AppleTV {
         Next = 7,
         Previous = 8,
         Suspend = 9,
-        Select = 10,
+        Select = 10
     }
     /** Convert a string representation of a key to the correct enum type.
     * @param string  The string.
