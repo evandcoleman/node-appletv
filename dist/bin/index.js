@@ -7,7 +7,7 @@ const credentials_1 = require("../lib/credentials");
 const scan_1 = require("./scan");
 const pair_1 = require("./pair");
 cli
-    .version('1.0.9')
+    .version('1.0.11')
     .command('pair', 'Pair with an Apple TV')
     .option('--timeout <timeout>', 'The amount of time (in seconds) to scan for Apple TVs', cli.INTEGER)
     .action((args, options, logger) => {

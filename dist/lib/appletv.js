@@ -218,7 +218,7 @@ class AppleTV extends typed_events_1.default {
             case AppleTV.Key.Right:
                 return this.sendKeyPressAndRelease(1, 0x8A);
             case AppleTV.Key.Menu:
-                return this.sendKeyHoldAndRelease(1, 0x86);
+                return this.sendKeyPressAndRelease(1, 0x86);
             case AppleTV.Key.Play:
                 return this.sendKeyPressAndRelease(12, 0xB0);
             case AppleTV.Key.Pause:
@@ -237,30 +237,26 @@ class AppleTV extends typed_events_1.default {
                 return this.sendKeyPressAndRelease(12, 0x60);
         }
     }
-
-
-    promiseTimeout (time) {
-        return new Promise(function(resolve,reject){
-            setTimeout(function(){resolve(time);},time);
-        });
-    };
-
-
-    sendKeyPressAndRelease(usePage, usage) {
-        let that = this;
-        return this.sendKeyPress(usePage, usage, true)
-            .then(() => {
-            return that.sendKeyPress(usePage, usage, false);
+    promiseTimeout(time) {
+        return new Promise(function (resolve) {
+            setTimeout(function () { resolve(time); }, time);
         });
     }
-
-   sendKeyHoldAndRelease(usePage, usage) {
+    ;
+    sendKeyPressAndRelease(usePage, usage) {
         let that = this;
         return this.sendKeyPress(usePage, usage, true)
             .then(() => {
             return this.promiseTimeout(2000);
         })
-        .then(() => {
+            .then(() => {
+            return that.sendKeyPress(usePage, usage, false);
+        });
+    }
+    sendKeyHoldAndRelease(usePage, usage) {
+        let that = this;
+        return this.sendKeyPress(usePage, usage, true)
+            .then(() => {
             return that.sendKeyPress(usePage, usage, false);
         });
     }
@@ -392,7 +388,7 @@ exports.AppleTV = AppleTV;
         else if (string == "longTv") {
             return AppleTV.Key.LongTv;
         }
-        else if (string == "tv") {
+        else if (string == "Tv") {
             return AppleTV.Key.Tv;
         }
     }
