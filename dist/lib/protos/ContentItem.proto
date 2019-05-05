@@ -6,7 +6,7 @@ import "LanguageOption.proto";
 message ContentItem {
   optional string identifier = 1;
   optional ContentItemMetadata metadata = 2;
-  optional string info = 3;
+  optional bytes info = 3;
   repeated LanguageOption availableLanguageOptions = 4;
   repeated LanguageOption currentLanguageOptions = 5;
 //  optional Lyrics lyrics = 6;
