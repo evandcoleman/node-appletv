@@ -4,7 +4,7 @@ import { load, Message as ProtoMessage } from 'protobufjs'
 import { v4 as uuid } from 'uuid';
 
 import { Connection } from './connection';
-import { Pairing } from './pairing'; 
+import { Pairing } from './pairing';
 import { Verifier } from './verifier';
 import { Credentials } from './credentials';
 import { NowPlayingInfo } from './now-playing-info';
@@ -88,18 +88,18 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
         }
       }
     })
-    .on('connect', () => {
-      that.emit('connect');
-    })
-    .on('close', () => {
-      that.emit('close');
-    })
-    .on('error', (error) => {
-      that.emit('error', error);
-    })
-    .on('debug', (message) => {
-      that.emit('debug', message);
-    });
+      .on('connect', () => {
+        that.emit('connect');
+      })
+      .on('close', () => {
+        that.emit('close');
+      })
+      .on('error', (error) => {
+        that.emit('error', error);
+      })
+      .on('debug', (message) => {
+        that.emit('debug', message);
+      });
 
     var queuePollTimer = null;
     this._on('newListener', (event, listener) => {
@@ -113,7 +113,7 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
                 width: -1,
                 height: 368
               }
-            }, false).then(() => {}).catch(error => {});
+            }, false).then(() => { }).catch(error => { });
           }
         }, 5000);
       }
@@ -147,9 +147,9 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
     let that = this;
 
     if (credentials) {
-      this.pairingId = credentials.pairingId;      
+      this.pairingId = credentials.pairingId;
     }
-    
+
     return this.connection
       .open()
       .then(() => {
@@ -276,12 +276,33 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
         return this.sendKeyPressAndRelease(1, 0x82);
       case AppleTV.Key.Select:
         return this.sendKeyPressAndRelease(1, 0x89);
+      case AppleTV.Key.LongTv:
+        return this.sendKeyHoldAndRelease(12, 0x60);
+      case AppleTV.Key.Tv:
+        return this.sendKeyPressAndRelease(12, 0x60);
     }
   }
+
+  private promiseTimeout(time) {
+    return new Promise(function (resolve) {
+      setTimeout(function () { resolve(time); }, time);
+    });
+  };
 
   private sendKeyPressAndRelease(usePage: number, usage: number): Promise<AppleTV> {
     let that = this;
     return this.sendKeyPress(usePage, usage, true)
+      .then(() => {
+        return that.sendKeyPress(usePage, usage, false);
+      });
+  }
+
+  private sendKeyHoldAndRelease(usePage: number, usage: number): Promise<AppleTV> {
+    let that = this;
+    return this.sendKeyPress(usePage, usage, true)
+      .then(() => {
+        return this.promiseTimeout(2000);
+      })
       .then(() => {
         return that.sendKeyPress(usePage, usage, false);
       });
@@ -389,7 +410,9 @@ export module AppleTV {
     Next,
     Previous,
     Suspend,
-    Select
+    Select,
+    LongTv,
+    Tv
   }
 
   /** Convert a string representation of a key to the correct enum type.
@@ -419,6 +442,10 @@ export module AppleTV {
       return AppleTV.Key.Suspend;
     } else if (string == "select") {
       return AppleTV.Key.Select;
+    } else if (string == "longTv") {
+      return AppleTV.Key.LongTv;
+    } else if (string == "Tv") {
+      return AppleTV.Key.Tv;
     }
   }
 }

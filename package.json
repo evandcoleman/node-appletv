@@ -38,7 +38,7 @@
     "ora": "^2.0.0",
     "protobufjs": "^6.8.4",
     "snake-case": "^2.1.0",
-    "sodium": "^2.0.3",
+    "sodium": "^3.0.2",
     "uuid": "^3.2.1",
     "varint": "^5.0.0"
   },
@@ -50,6 +50,6 @@
     "@types/uuid": "^3.4.3",
     "rimraf": "^2.6.2",
     "typedoc": "^0.11.1",
-    "typescript": "^2.7.2"
+    "typescript": "^3.4.5"
   }
 }
