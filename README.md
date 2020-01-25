@@ -58,27 +58,16 @@ $ npm install --save node-appletv
 ```typescript
 import { scan } from 'node-appletv';
 
-return scan()
-    .then(devices => {
-    	// devices is an array of AppleTV objects
-    	let device = devices[0];
-    	return device.openConnection()
-    		.then(device => {
-    			return device.pair();
-    		})
-    		.then(callback => {
-    			// the pin is provided onscreen from the Apple TV
-    			return callback(pin);
-    		});
-    })
-    .then(device => {
-    	// you're paired!
-    	let credentials = device.credentials.toString();
-    	console.log(credentials);
-    })
-    .catch(error => {
-    	console.log(error);
-    });
+let devices = await scan();
+// devices is an array of AppleTV objects
+let device = devices[0];
+await device.openConnection();
+let callback = await device.pair();
+// the pin is provided onscreen from the Apple TV
+await callback(pin);
+// you're paired!
+let credentials = device.credentials.toString();
+console.log(credentials);
 ```
 
 #### Connect to a paired Apple TV
@@ -89,27 +78,18 @@ import { scan, parseCredentials, NowPlayingInfo } from 'node-appletv';
 // see example above for how to get the credentials string
 let credentials = parseCredentials(credentialsString);
 
-return scan(uniqueIdentifier)
-    .then(devices => {
-    	let device = devices[0];
-    	return device.openConnection(credentials);
-    })
-    .then(device => {
-    	// you're connected!
-    	// press menu
-    	return device.sendKeyCommand(AppleTV.Key.Menu);
-    })
-    .then(device => {
-    	console.log("Sent a menu command!");
-    	
-    	// monitor now playing info
-    	device.on('nowPlaying', (info: NowPlayingInfo) => {
-    		console.log(info.toString());
-    	});
-    })
-    .catch(error => {
-    	console.log(error);
-    });
+let devices = await scan(uniqueIdentifier)[]
+let device = devices[0];
+await device.openConnection(credentials);
+// you're connected!
+// press menu
+await device.sendKeyCommand(AppleTV.Key.Menu);
+console.log("Sent a menu command!");
+
+// monitor now playing info
+device.on('nowPlaying', (info: NowPlayingInfo) => {
+	console.log(info.toString());
+});
 ```
 
 The `uniqueIdentifier` is advertised by each Apple TV via Bonjour. Use an app like [Bonjour Browser](http://www.tildesoft.com) to find it. The identifier is also the first value in the string value of the `Credentials` object.
