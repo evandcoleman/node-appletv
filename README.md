@@ -3,7 +3,7 @@
 > A node module for interacting with an Apple TV (4th-generation or later) over the Media Remote Protocol.
 
 [![npm version](https://badge.fury.io/js/node-appletv.svg)](https://badge.fury.io/js/node-appletv)
-[![CI](https://travis-ci.org/edc1591/node-appletv.svg?branch=master)](https://travis-ci.org/edc1591/node-appletv)
+[![CI](https://travis-ci.org/evandcoleman/node-appletv.svg?branch=master)](https://travis-ci.org/evandcoleman/node-appletv)
 [![License][license-image]][license-url]
 
 ![](images/pairing.gif)
@@ -14,7 +14,7 @@
 
 ## Documentation
 
-Developer documentation for `node-appletv` can be found [here](https://edc1591.github.io/node-appletv/).
+Developer documentation for `node-appletv` can be found [here](https://evandcoleman.github.io/node-appletv/).
 
 ## Usage
 
@@ -114,7 +114,7 @@ return scan(uniqueIdentifier)
 
 The `uniqueIdentifier` is advertised by each Apple TV via Bonjour. Use an app like [Bonjour Browser](http://www.tildesoft.com) to find it. The identifier is also the first value in the string value of the `Credentials` object.
 
-See [homebridge-theater-mode](https://github.com/edc1591/homebridge-theater-mode) for a more practical use of this module.
+See [homebridge-theater-mode](https://github.com/evandcoleman/homebridge-theater-mode) for a more practical use of this module.
 
 ## TODO
 
@@ -136,7 +136,7 @@ See [homebridge-theater-mode](https://github.com/edc1591/homebridge-theater-mode
 
 ## Meta
 
-You can find me on Twitter [@edc1591](https://twitter.com/edc1591)
+You can find me on Twitter [@evandcoleman](https://twitter.com/evandcoleman)
 
 Distributed under the MIT license. See ``LICENSE`` for more information.
 
