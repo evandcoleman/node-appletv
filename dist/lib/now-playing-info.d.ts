@@ -16,6 +16,6 @@ export declare class NowPlayingInfo {
 export declare module NowPlayingInfo {
     enum State {
         Playing = "playing",
-        Paused = "paused",
+        Paused = "paused"
     }
 }

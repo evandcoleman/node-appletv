@@ -57,8 +57,7 @@ export class Verifier {
           32
         );
         let cipherText = encryptedData.slice(0, -16);
-        let hmac = encryptedData.slice(-16);
-        let decryptedData = enc.verifyAndDecrypt(cipherText, hmac, null, Buffer.from('PV-Msg02'), encryptionKey);
+        let decryptedData = enc.verifyAndDecrypt(cipherText, Buffer.from('PV-Msg02'), encryptionKey);
         let innerTLV = tlv.decode(decryptedData);
         let identifier = innerTLV[tlv.Tag.Username];
         let signature = innerTLV[tlv.Tag.Signature];

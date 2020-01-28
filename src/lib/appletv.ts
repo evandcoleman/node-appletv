@@ -2,6 +2,8 @@ import { Service } from 'mdns';
 import * as path from 'path';
 import { load, Message as ProtoMessage } from 'protobufjs'
 import { v4 as uuid } from 'uuid';
+import { EventEmitter } from 'events';
+import { Socket } from 'net';
 
 import { Connection } from './connection';
 import { Pairing } from './pairing'; 
@@ -9,7 +11,6 @@ import { Verifier } from './verifier';
 import { Credentials } from './credentials';
 import { NowPlayingInfo } from './now-playing-info';
 import { SupportedCommand } from './supported-command';
-import TypedEventEmitter from './typed-events';
 import { Message } from './message';
 import number from './util/number';
 
@@ -40,7 +41,7 @@ export interface ClientUpdatesConfig {
   keyboardUpdates: boolean;
 }
 
-export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
+export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
   public name: string;
   public address: string;
   public port: number;
@@ -50,19 +51,15 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
 
   private connection: Connection;
 
-  constructor(private service: Service) {
+  constructor(private service: Service, socket?: Socket) {
     super();
 
     this.service = service;
     this.name = service.txtRecord.Name;
-    if (service.addresses.length > 1) {
-      this.address = service.addresses[1];
-    } else {
-      this.address = service.addresses[0];
-    }
+    this.address = service.addresses.filter(x => x.includes('.'))[0];
     this.port = service.port;
     this.uid = service.txtRecord.UniqueIdentifier;
-    this.connection = new Connection(this);
+    this.connection = new Connection(this, socket);
 
     let that = this;
     this.connection.on('message', (message: Message) => {
@@ -102,7 +99,7 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
     });
 
     var queuePollTimer = null;
-    this._on('newListener', (event, listener) => {
+    this.on('newListener', (event, listener) => {
       if (queuePollTimer == null && (event == 'nowPlaying' || event == 'supportedCommands')) {
         queuePollTimer = setInterval(() => {
           if (that.connection.isOpen) {
@@ -118,7 +115,7 @@ export class AppleTV extends TypedEventEmitter<AppleTV.Events> {
         }, 5000);
       }
     });
-    this._on('removeListener', (event, listener) => {
+    this.on('removeListener', (event, listener) => {
       if (queuePollTimer != null && (event == 'nowPlaying' || event == 'supportedCommands')) {
         let listenerCount = that.listenerCount('nowPlaying') + that.listenerCount('supportedCommands');
         if (listenerCount == 0) {

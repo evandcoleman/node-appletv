@@ -164,8 +164,7 @@ export class Pairing {
           .then(message => {
             let encryptedData = tlv.decode(message.payload.pairingData)[tlv.Tag.EncryptedData];
             let cipherText = encryptedData.slice(0, -16);
-            let hmac = encryptedData.slice(-16);
-            let decrpytedData = enc.verifyAndDecrypt(cipherText, hmac, null, Buffer.from('PS-Msg06'), encryptionKey);
+            let decrpytedData = enc.verifyAndDecrypt(cipherText, Buffer.from('PS-Msg06'), encryptionKey);
             let tlvData = tlv.decode(decrpytedData);
             that.device.credentials = new Credentials(
               that.device.uid,

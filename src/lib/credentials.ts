@@ -53,8 +53,7 @@ export class Credentials {
   decrypt(message: Buffer): Buffer {
     let nonce = number.UInt53toBufferLE(this.decryptCount++);
     let cipherText = message.slice(0, -16);
-    let hmac = message.slice(-16);
 
-    return encryption.verifyAndDecrypt(cipherText, hmac, null, nonce, this.readKey);
+    return encryption.verifyAndDecrypt(cipherText, nonce, this.readKey);
   }
 }

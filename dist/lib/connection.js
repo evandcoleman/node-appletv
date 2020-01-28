@@ -7,15 +7,15 @@ const path = require("path");
 const varint = require("varint");
 const snake = require("snake-case");
 const camelcase = require("camelcase");
-const typed_events_1 = require("./typed-events");
+const events_1 = require("events");
 const message_1 = require("./message");
-class Connection extends typed_events_1.default {
-    constructor(device) {
+class Connection extends events_1.EventEmitter /* <Connection.Events> */ {
+    constructor(device, socket) {
         super();
         this.device = device;
         this.callbacks = new Map();
         this.buffer = Buffer.alloc(0);
-        this.socket = new net_1.Socket();
+        this.socket = socket || new net_1.Socket();
         let that = this;
         this.socket.on('data', (data) => {
             try {

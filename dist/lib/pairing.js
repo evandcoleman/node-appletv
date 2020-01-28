@@ -105,8 +105,7 @@ class Pairing {
                 .then(message => {
                 let encryptedData = tlv_1.default.decode(message.payload.pairingData)[tlv_1.default.Tag.EncryptedData];
                 let cipherText = encryptedData.slice(0, -16);
-                let hmac = encryptedData.slice(-16);
-                let decrpytedData = encryption_1.default.verifyAndDecrypt(cipherText, hmac, null, Buffer.from('PS-Msg06'), encryptionKey);
+                let decrpytedData = encryption_1.default.verifyAndDecrypt(cipherText, Buffer.from('PS-Msg06'), encryptionKey);
                 let tlvData = tlv_1.default.decode(decrpytedData);
                 that.device.credentials = new credentials_1.Credentials(that.device.uid, tlvData[tlv_1.default.Tag.Username], that.device.pairingId, tlvData[tlv_1.default.Tag.PublicKey], seed);
                 return that.device;

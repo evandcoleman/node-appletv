@@ -5,11 +5,11 @@ import * as path from 'path';
 import * as varint from 'varint';
 import snake = require('snake-case');
 import camelcase = require('camelcase');
+import { EventEmitter } from 'events';
 
 import { Credentials } from './credentials';
 import { AppleTV } from './appletv';
 import encryption from './util/encryption';
-import TypedEventEmitter from './typed-events';
 import { Message } from './message';
 
 interface MessageCallback {
@@ -17,17 +17,17 @@ interface MessageCallback {
   callback: (message: Message) => void
 }
 
-export class Connection extends TypedEventEmitter<Connection.Events> {
+export class Connection extends EventEmitter /* <Connection.Events> */ {
   public isOpen: boolean;
   private socket: Socket;
   private callbacks = new Map<String, [MessageCallback]>();
   private ProtocolMessage: Type;
   private buffer: Buffer = Buffer.alloc(0);
 
-  constructor(public device: AppleTV) {
+  constructor(public device: AppleTV, socket?: Socket) {
     super();
 
-    this.socket = new Socket();
+    this.socket = socket || new Socket();
     let that = this;
     this.socket.on('data', (data) => {
       try {
