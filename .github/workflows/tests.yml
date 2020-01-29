@@ -3,14 +3,12 @@ name: Tests
 on: [push]
 
 jobs:
-  build:
-
-    runs-on: ubuntu-16.04
-
+  test:
+    runs-on: ${{ matrix.platform }}
     strategy:
       matrix:
+        platform: [ubuntu-latest]
         node-version: [8.x, 10.x]
-
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}
@@ -23,3 +21,16 @@ jobs:
     - run: npm test
       env:
         CI: true
+    - uses: paambaati/codeclimate-action@v2.4.0
+      env:
+        CC_TEST_REPORTER_ID: c39295f3d8ab7a0e5d9de6567126a4db8c1e6bd35afec10c5a842321016eab8a
+      with:
+        coverageCommand: npm run coverage
+        coverageLocations: ./coverage/cobertura-coverage.xml:cobertura
+    - uses: actions/cache@v1
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+    
