@@ -49,9 +49,9 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
   public pairingId: string = uuid();
   public credentials: Credentials;
 
-  private connection: Connection;
+  public connection: Connection;
 
-  constructor(private service: Service, socket?: Socket) {
+  constructor(private service: Service) {
     super();
 
     this.service = service;
@@ -59,7 +59,7 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
     this.address = service.addresses.filter(x => x.includes('.'))[0];
     this.port = service.port;
     this.uid = service.txtRecord.UniqueIdentifier;
-    this.connection = new Connection(this, socket);
+    this.connection = new Connection(this);
 
     let that = this;
     this.connection.on('message', (message: Message) => {

@@ -12,7 +12,7 @@ const supported_command_1 = require("./supported-command");
 const message_1 = require("./message");
 const number_1 = require("./util/number");
 class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
-    constructor(service, socket) {
+    constructor(service) {
         super();
         this.service = service;
         this.pairingId = uuid_1.v4();
@@ -21,7 +21,7 @@ class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
         this.address = service.addresses.filter(x => x.includes('.'))[0];
         this.port = service.port;
         this.uid = service.txtRecord.UniqueIdentifier;
-        this.connection = new connection_1.Connection(this, socket);
+        this.connection = new connection_1.Connection(this);
         let that = this;
         this.connection.on('message', (message) => {
             that.emit('message', message);

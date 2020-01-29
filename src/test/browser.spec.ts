@@ -1,7 +1,5 @@
 import { Browser } from '../lib/browser';
 import { AppleTV } from '../lib/appletv';
-import { MockServer } from './helpers/mock-server';
-import * as Mitm from 'mitm';
 import { expect } from 'chai';
 import * as mdns from 'mdns';
 import 'mocha';
@@ -11,6 +9,8 @@ const AppleTVIdentifier = "TestAppleTVIdentifier";
 
 describe('apple tv discovery', function() {
   it('should discover apple tv', async function() {
+    this.timeout(5000);
+
     let ad = mdns.createAdvertisement(mdns.tcp('mediaremotetv'), 54321, {
       name: AppleTVName,
       txtRecord: {

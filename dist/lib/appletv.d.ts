@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { Service } from 'mdns';
 import { EventEmitter } from 'events';
-import { Socket } from 'net';
+import { Connection } from './connection';
 import { Credentials } from './credentials';
 import { NowPlayingInfo } from './now-playing-info';
 import { SupportedCommand } from './supported-command';
@@ -32,8 +32,8 @@ export declare class AppleTV extends EventEmitter {
     uid: string;
     pairingId: string;
     credentials: Credentials;
-    private connection;
-    constructor(service: Service, socket?: Socket);
+    connection: Connection;
+    constructor(service: Service);
     /**
     * Pair with an already discovered AppleTV.
     * @returns A promise that resolves to the AppleTV object.

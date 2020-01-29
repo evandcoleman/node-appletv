@@ -1,41 +1,43 @@
 import { createServer, Server } from 'net';
 import { AppleTV } from '../../lib/appletv';
 import { Connection } from '../../lib/connection';
+import { Message } from '../../lib/message';
 import * as mdns from 'mdns';
 
 export class MockServer {
-  public device: Promise<AppleTV>;
+  public device: AppleTV;
+  public message: Promise<Message>;
 
-  private server?: Server;
+  private server: Server;
 
   constructor() {
-    console.log("1");
+    let port = 65416;
+    this.device = new AppleTV({
+      addresses: ['127.0.0.1'],
+      port: port,
+      txtRecord: {
+        Name: "Mock Apple TV",
+        UniqueIdentifier: "MockAppleTVUUID"
+      }
+    } as mdns.Service);
+    let d = this.device;
+    let that = this;
 
-    this.device = new Promise<AppleTV>(function(resolve, reject) {
-      console.log("2");
-      this.server = createServer(function(socket) {
-        console.log("3");
-        let device = new AppleTV({
-          addresses: ['127.0.0.1'],
-          port: 65416,
-          txtRecord: {
-            Name: "Mock Apple TV",
-            UniqueIdentifier: "MockAppleTVUUID"
-          }
-        } as mdns.Service, socket);
-        device.on('debug', (message) => {
-          console.log(message);
+    this.message = new Promise<Message>(function(resolve, reject) {
+      that.server = createServer(function(socket) {
+        let connection = new Connection(d, socket);
+        d.connection = connection;
+        d.on('message', function(message) {
+          resolve(message);
         });
-        device.on('error', (message) => {
-          console.log(message);
-        });
-        device.on('message', (message) => {
-          console.log(message);
-        });
-        resolve(device);
       });
-      console.log("4");
-      this.server.listen(65416);
-    }.bind(this));
+
+      that.server.listen(port);
+    });
+  }
+
+  close() {
+    this.server.close();
+    this.device.connection.close();
   }
 }

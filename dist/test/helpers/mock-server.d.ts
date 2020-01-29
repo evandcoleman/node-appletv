@@ -1,6 +1,7 @@
 import { AppleTV } from '../../lib/appletv';
 export declare class MockServer {
-    device: Promise<AppleTV>;
-    private server?;
+    device: AppleTV;
+    private server;
     constructor();
+    private handleDeviceInfoMessage;
 }
