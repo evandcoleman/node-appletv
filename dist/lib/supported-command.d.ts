@@ -19,6 +19,6 @@ export declare module SupportedCommand {
         ChangePlaybackRate = "ChangePlaybackRate",
         SeekToPlaybackPosition = "SeekToPlaybackPosition",
         NextInContext = "NextInContext",
-        PreviousInContext = "PreviousInContext",
+        PreviousInContext = "PreviousInContext"
     }
 }

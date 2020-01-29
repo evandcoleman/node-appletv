@@ -52,6 +52,6 @@ export declare module Message {
         SendPackedVirtualTouchEvent = 43,
         SendLyricsEvent = 44,
         PlaybackQueueCapabilitiesRequest = 45,
-        ModifyOutputContextRequest = 46,
+        ModifyOutputContextRequest = 46
     }
 }

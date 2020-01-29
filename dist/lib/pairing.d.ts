@@ -14,6 +14,6 @@ export declare class Pairing {
     * @returns A promise that resolves to a callback which takes in the pairing pin from the Apple TV.
     */
     initiatePair(): Promise<(pin: string) => Promise<AppleTV>>;
-    private completePairing(pin);
-    private waitForSequence(sequence, timeout?);
+    private completePairing;
+    private waitForSequence;
 }

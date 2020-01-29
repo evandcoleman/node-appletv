@@ -3,27 +3,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path = require("path");
 const protobufjs_1 = require("protobufjs");
 const uuid_1 = require("uuid");
+const events_1 = require("events");
 const connection_1 = require("./connection");
 const pairing_1 = require("./pairing");
 const verifier_1 = require("./verifier");
 const now_playing_info_1 = require("./now-playing-info");
 const supported_command_1 = require("./supported-command");
-const typed_events_1 = require("./typed-events");
 const message_1 = require("./message");
 const number_1 = require("./util/number");
-class AppleTV extends typed_events_1.default {
+class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
     constructor(service) {
         super();
         this.service = service;
         this.pairingId = uuid_1.v4();
         this.service = service;
         this.name = service.txtRecord.Name;
-        if (service.addresses.length > 1) {
-            this.address = service.addresses[1];
-        }
-        else {
-            this.address = service.addresses[0];
-        }
+        this.address = service.addresses.filter(x => x.includes('.'))[0];
         this.port = service.port;
         this.uid = service.txtRecord.UniqueIdentifier;
         this.connection = new connection_1.Connection(this);
@@ -64,7 +59,7 @@ class AppleTV extends typed_events_1.default {
             that.emit('debug', message);
         });
         var queuePollTimer = null;
-        this._on('newListener', (event, listener) => {
+        this.on('newListener', (event, listener) => {
             if (queuePollTimer == null && (event == 'nowPlaying' || event == 'supportedCommands')) {
                 queuePollTimer = setInterval(() => {
                     if (that.connection.isOpen) {
@@ -80,7 +75,7 @@ class AppleTV extends typed_events_1.default {
                 }, 5000);
             }
         });
-        this._on('removeListener', (event, listener) => {
+        this.on('removeListener', (event, listener) => {
             if (queuePollTimer != null && (event == 'nowPlaying' || event == 'supportedCommands')) {
                 let listenerCount = that.listenerCount('nowPlaying') + that.listenerCount('supportedCommands');
                 if (listenerCount == 0) {
