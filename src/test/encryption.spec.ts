@@ -6,7 +6,7 @@ import 'mocha';
 describe('test encryption', function() {
   it('should encrypt and decrypt string', function() {
     let value = Buffer.from("some string");
-    let nonce = Buffer.from('Some-Nonce');
+    let nonce = Buffer.from('PS-Msg06');
     let key = enc.HKDF(
       "sha512",
       Buffer.from("Pair-Setup-Encrypt-Salt"),
@@ -14,8 +14,8 @@ describe('test encryption', function() {
       Buffer.from("Pair-Setup-Encrypt-Info"),
       32
     );
-    let encrypted = enc.encryptAndSeal(value, null, nonce, key)[0];
-    let decrypted = enc.verifyAndDecrypt(encrypted, nonce, key);
+    let encrypted = enc.encryptAndSeal(value, null, nonce, key);
+    let decrypted = enc.verifyAndDecrypt(encrypted[0], encrypted[1], null, nonce, key);
     
     expect(decrypted.toString()).to.equal(value.toString());
   });

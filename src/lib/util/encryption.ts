@@ -1,4 +1,4 @@
-import * as chacha20 from 'chacha20';
+import { api as Sodium } from 'sodium';
 import * as crypto from 'crypto';
 
 import number from './number';
@@ -16,9 +16,13 @@ function computePoly1305(cipherText: Buffer, AAD: Buffer, nonce: Buffer, key: Bu
             getPadding(cipherText, 16),
             number.UInt53toBufferLE(AAD.length),
             number.UInt53toBufferLE(cipherText.length)
-        ]);
+        ])
 
-    return chacha20.encrypt(key, nonce, msg);
+    const polyKey = Sodium.crypto_stream_chacha20(32, nonce, key);
+    const computed_hmac = Sodium.crypto_onetimeauth(msg, polyKey);
+    polyKey.fill(0);
+
+    return computed_hmac;
 }
 
 // i'd really prefer for this to be a direct call to
@@ -27,13 +31,26 @@ function computePoly1305(cipherText: Buffer, AAD: Buffer, nonce: Buffer, key: Bu
 // calculate the HMAC is not compatible with homekit
 // (long story short, it uses [ AAD, AAD.length, CipherText, CipherText.length ]
 // whereas homekit expects [ AAD, CipherText, AAD.length, CipherText.length ]
-function verifyAndDecrypt(cipherText: Buffer, nonce: Buffer, key: Buffer): Buffer {
-    return chacha20.decrypt(key, nonce, cipherText);
+function verifyAndDecrypt(cipherText: Buffer, mac: Buffer, AAD: Buffer, nonce: Buffer, key: Buffer): Buffer {
+    const matches =
+        Sodium.crypto_verify_16(
+            mac,
+            computePoly1305(cipherText, AAD, nonce, key)
+        );
+
+    if (matches === 0) {
+        return Sodium
+            .crypto_stream_chacha20_xor_ic(cipherText, nonce, 1, key);
+    }
+
+    return null;
 }
 
 // See above about calling directly into libsodium.
 function encryptAndSeal(plainText: Buffer, AAD: Buffer, nonce: Buffer, key: Buffer): Buffer[] {
-    const cipherText = chacha20.encrypt(key, nonce, plainText);
+    const cipherText =
+        Sodium
+            .crypto_stream_chacha20_xor_ic(plainText, nonce, 1, key);
 
     const hmac =
         computePoly1305(cipherText, AAD, nonce, key);

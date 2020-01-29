@@ -38,7 +38,8 @@ class Verifier {
             let sharedSecret = curve25519.deriveSharedSecret(verifyPrivate, sessionPublicKey);
             let encryptionKey = encryption_1.default.HKDF("sha512", Buffer.from("Pair-Verify-Encrypt-Salt"), sharedSecret, Buffer.from("Pair-Verify-Encrypt-Info"), 32);
             let cipherText = encryptedData.slice(0, -16);
-            let decryptedData = encryption_1.default.verifyAndDecrypt(cipherText, Buffer.from('PV-Msg02'), encryptionKey);
+            let hmac = encryptedData.slice(-16);
+            let decryptedData = encryption_1.default.verifyAndDecrypt(cipherText, hmac, null, Buffer.from('PV-Msg02'), encryptionKey);
             let innerTLV = tlv_1.default.decode(decryptedData);
             let identifier = innerTLV[tlv_1.default.Tag.Username];
             let signature = innerTLV[tlv_1.default.Tag.Signature];

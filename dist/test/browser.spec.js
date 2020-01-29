@@ -18,6 +18,7 @@ const AppleTVIdentifier = "TestAppleTVIdentifier";
 describe('apple tv discovery', function () {
     it('should discover apple tv', function () {
         return __awaiter(this, void 0, void 0, function* () {
+            this.timeout(5000);
             let ad = mdns.createAdvertisement(mdns.tcp('mediaremotetv'), 54321, {
                 name: AppleTVName,
                 txtRecord: {

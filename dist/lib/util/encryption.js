@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const chacha20 = require("chacha20");
+const sodium_1 = require("sodium");
 const crypto = require("crypto");
 const number_1 = require("./number");
 function computePoly1305(cipherText, AAD, nonce, key) {
@@ -15,7 +15,10 @@ function computePoly1305(cipherText, AAD, nonce, key) {
         number_1.default.UInt53toBufferLE(AAD.length),
         number_1.default.UInt53toBufferLE(cipherText.length)
     ]);
-    return chacha20.encrypt(key, nonce, msg);
+    const polyKey = sodium_1.api.crypto_stream_chacha20(32, nonce, key);
+    const computed_hmac = sodium_1.api.crypto_onetimeauth(msg, polyKey);
+    polyKey.fill(0);
+    return computed_hmac;
 }
 // i'd really prefer for this to be a direct call to
 // Sodium.crypto_aead_chacha20poly1305_decrypt()
@@ -23,12 +26,18 @@ function computePoly1305(cipherText, AAD, nonce, key) {
 // calculate the HMAC is not compatible with homekit
 // (long story short, it uses [ AAD, AAD.length, CipherText, CipherText.length ]
 // whereas homekit expects [ AAD, CipherText, AAD.length, CipherText.length ]
-function verifyAndDecrypt(cipherText, nonce, key) {
-    return chacha20.decrypt(key, nonce, cipherText);
+function verifyAndDecrypt(cipherText, mac, AAD, nonce, key) {
+    const matches = sodium_1.api.crypto_verify_16(mac, computePoly1305(cipherText, AAD, nonce, key));
+    if (matches === 0) {
+        return sodium_1.api
+            .crypto_stream_chacha20_xor_ic(cipherText, nonce, 1, key);
+    }
+    return null;
 }
 // See above about calling directly into libsodium.
 function encryptAndSeal(plainText, AAD, nonce, key) {
-    const cipherText = chacha20.encrypt(key, nonce, plainText);
+    const cipherText = sodium_1.api
+        .crypto_stream_chacha20_xor_ic(plainText, nonce, 1, key);
     const hmac = computePoly1305(cipherText, AAD, nonce, key);
     return [cipherText, hmac];
 }

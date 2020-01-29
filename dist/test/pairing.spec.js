@@ -9,16 +9,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const message_1 = require("../lib/message");
 const mock_server_1 = require("./helpers/mock-server");
+const chai_1 = require("chai");
 require("mocha");
 describe('apple tv pairing', function () {
-    it('should pair with apple tv', function () {
+    beforeEach(function () {
+        this.server = new mock_server_1.MockServer();
+        this.device = this.server.device;
+    });
+    afterEach(function () {
+        this.server.close();
+    });
+    it('should send introduction', function () {
         return __awaiter(this, void 0, void 0, function* () {
-            this.timeout(10000);
-            let server = new mock_server_1.MockServer();
-            let device = server.device;
-            yield device.openConnection();
-            // let callback = await device.pair();
+            this.device.openConnection();
+            let message = yield this.server.message;
+            chai_1.expect(message.type).to.equal(message_1.Message.Type.DeviceInfoMessage);
         });
     });
 });

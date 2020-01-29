@@ -10,7 +10,7 @@ describe('test encryption', function () {
         let nonce = Buffer.from('Some-Nonce');
         let key = encryption_1.default.HKDF("sha512", Buffer.from("Pair-Setup-Encrypt-Salt"), crypto.randomBytes(32), Buffer.from("Pair-Setup-Encrypt-Info"), 32);
         let encrypted = encryption_1.default.encryptAndSeal(value, null, nonce, key)[0];
-        let decrypted = encryption_1.default.verifyAndDecrypt(encrypted, nonce, key);
+        let decrypted = encryption_1.default.verifyAndDecrypt(encrypted, null, null, nonce, key);
         chai_1.expect(decrypted.toString()).to.equal(value.toString());
     });
 });
