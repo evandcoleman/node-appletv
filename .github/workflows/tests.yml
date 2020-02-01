@@ -17,16 +17,25 @@ jobs:
         node-version: ${{ matrix.node-version }}
     - run: sudo apt-get install libavahi-compat-libdnssd-dev
     - run: npm install
+    - run: |
+        if [ ! -f ./coverage/cc-test-reporter ]; then
+          mkdir -p coverage/
+          curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./coverage/cc-test-reporter
+          chmod +x ./coverage/cc-test-reporter
+        fi
+      name: Install code climate reporter
+    - run: ./coverage/cc-test-reporter before-build
+      env:
+        CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
     - run: npm run build --if-present
-    - run: npm test
+    - run: npm run coverage
+      name: Run tests
+    - run: |
+        ./coverage/cc-test-reporter format-coverage -t lcov -o ./coverage/coverage.json ./coverage/lcov.info
+        ./coverage/cc-test-reporter upload-coverage -i ./coverage/coverage.json
+      name: Upload to code climate
       env:
-        CI: true
-    - uses: paambaati/codeclimate-action@v2.4.0
-      env:
-        CC_TEST_REPORTER_ID: c39295f3d8ab7a0e5d9de6567126a4db8c1e6bd35afec10c5a842321016eab8a
-      with:
-        coverageCommand: npm run coverage
-        coverageLocations: ./coverage/cobertura-coverage.xml:cobertura
+        CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
     - uses: actions/cache@v1
       with:
         path: ~/.npm

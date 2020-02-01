@@ -16,7 +16,7 @@
     "prepare": "npm run build",
     "build": "npm run clean && tsc && cp -R ./src/lib/protos ./dist/lib/protos",
     "test": "mocha -r ts-node/register ./src/test/**/*.spec.ts",
-    "coverage": "rm -rf coverage && nyc --reporter=cobertura mocha -r ts-node/register ./src/test/**/*.spec.ts",
+    "coverage": "nyc --reporter=lcov mocha -r ts-node/register ./src/test/**/*.spec.ts",
     "clean": "rimraf dist",
     "docs": "rimraf docs && typedoc --mode modules --excludePrivate --excludeExternals --out ./docs ./src"
   },
