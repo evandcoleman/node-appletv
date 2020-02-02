@@ -8,6 +8,7 @@ const varint = require("varint");
 const snake = require("snake-case");
 const camelcase = require("camelcase");
 const events_1 = require("events");
+const tlv_1 = require("./util/tlv");
 const message_1 = require("./message");
 class Connection extends events_1.EventEmitter /* <Connection.Events> */ {
     constructor(device, socket) {
@@ -181,6 +182,29 @@ class Connection extends events_1.EventEmitter /* <Connection.Events> */ {
                 that.emit('debug', "DEBUG: <<<< Received Protobuf=" + JSON.stringify(message.toJSON(), null, 2));
                 return message;
             });
+        });
+    }
+    waitForSequence(sequence, timeout = 3) {
+        let that = this;
+        let handler = (message, resolve) => {
+            let tlvData = tlv_1.default.decode(message.payload.pairingData);
+            if (Buffer.from([sequence]).equals(tlvData[tlv_1.default.Tag.Sequence])) {
+                resolve(message);
+            }
+        };
+        return new Promise((resolve, reject) => {
+            that.on('message', (message) => {
+                if (message.type == message_1.Message.Type.CryptoPairingMessage) {
+                    handler(message, resolve);
+                }
+            });
+            setTimeout(() => {
+                reject(new Error("Timed out waiting for crypto sequence " + sequence));
+            }, timeout * 1000);
+        })
+            .then(value => {
+            that.removeListener('message', handler);
+            return value;
         });
     }
 }

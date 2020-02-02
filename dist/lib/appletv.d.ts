@@ -77,6 +77,7 @@ export declare class AppleTV extends EventEmitter {
     * @returns A promise that resolves to the AppleTV object after the message has been sent.
     */
     sendKeyCommand(key: AppleTV.Key): Promise<AppleTV>;
+    waitForSequence(sequence: number, timeout?: number): Promise<Message>;
     private sendKeyPressAndRelease;
     private sendKeyPress;
     private requestPlaybackQueueWithWait;

@@ -21,6 +21,7 @@ export declare class Connection extends EventEmitter {
     send(message: ProtoMessage<{}>, waitForResponse: boolean, priority: number, credentials?: Credentials): Promise<Message>;
     private sendProtocolMessage;
     private decodeMessage;
+    waitForSequence(sequence: number, timeout?: number): Promise<Message>;
 }
 export declare module Connection {
     interface Events {

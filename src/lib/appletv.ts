@@ -276,6 +276,10 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
     }
   }
 
+  waitForSequence(sequence: number, timeout: number = 3): Promise<Message> {
+    return this.connection.waitForSequence(sequence, timeout);
+  }
+
   private sendKeyPressAndRelease(usePage: number, usage: number): Promise<AppleTV> {
     let that = this;
     return this.sendKeyPress(usePage, usage, true)

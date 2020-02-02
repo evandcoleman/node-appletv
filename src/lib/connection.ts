@@ -10,6 +10,7 @@ import { EventEmitter } from 'events';
 import { Credentials } from './credentials';
 import { AppleTV } from './appletv';
 import encryption from './util/encryption';
+import tlv from './util/tlv';
 import { Message } from './message';
 
 interface MessageCallback {
@@ -213,6 +214,31 @@ export class Connection extends EventEmitter /* <Connection.Events> */ {
             return message;
           });
       });
+  }
+
+  waitForSequence(sequence: number, timeout: number = 3): Promise<Message> {
+    let that = this;
+    let handler = (message: Message, resolve: any) => {
+      let tlvData = tlv.decode(message.payload.pairingData);
+      if (Buffer.from([sequence]).equals(tlvData[tlv.Tag.Sequence])) {
+        resolve(message);
+      }
+    };
+
+    return new Promise<Message>((resolve, reject) => {
+      that.on('message', (message: Message) => {
+        if (message.type == Message.Type.CryptoPairingMessage) {
+          handler(message, resolve);
+        }
+      });
+      setTimeout(() => {
+        reject(new Error("Timed out waiting for crypto sequence " + sequence));
+      }, timeout * 1000);
+    })
+    .then(value => {
+      that.removeListener('message', handler);
+      return value;
+    });
   }
 }
 

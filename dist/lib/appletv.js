@@ -228,6 +228,9 @@ class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
                 return this.sendKeyPressAndRelease(1, 0x89);
         }
     }
+    waitForSequence(sequence, timeout = 3) {
+        return this.connection.waitForSequence(sequence, timeout);
+    }
     sendKeyPressAndRelease(usePage, usage) {
         let that = this;
         return this.sendKeyPress(usePage, usage, true)
