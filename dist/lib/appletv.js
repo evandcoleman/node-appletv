@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const path = require("path");
 const protobufjs_1 = require("protobufjs");
@@ -22,68 +31,7 @@ class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
         this.port = service.port;
         this.uid = service.txtRecord.UniqueIdentifier;
         this.connection = new connection_1.Connection(this);
-        let that = this;
-        this.connection.on('message', (message) => {
-            that.emit('message', message);
-            if (message.type == message_1.Message.Type.SetStateMessage) {
-                if (message.payload == null) {
-                    that.emit('nowPlaying', null);
-                    return;
-                }
-                if (message.payload.nowPlayingInfo) {
-                    let info = new now_playing_info_1.NowPlayingInfo(message.payload);
-                    that.emit('nowPlaying', info);
-                }
-                if (message.payload.supportedCommands) {
-                    let commands = (message.payload.supportedCommands.supportedCommands || [])
-                        .map(sc => {
-                        return new supported_command_1.SupportedCommand(sc.command, sc.enabled || false, sc.canScrub || false);
-                    });
-                    that.emit('supportedCommands', commands);
-                }
-                if (message.payload.playbackQueue) {
-                    that.emit('playbackQueue', message.payload.playbackQueue);
-                }
-            }
-        })
-            .on('connect', () => {
-            that.emit('connect');
-        })
-            .on('close', () => {
-            that.emit('close');
-        })
-            .on('error', (error) => {
-            that.emit('error', error);
-        })
-            .on('debug', (message) => {
-            that.emit('debug', message);
-        });
-        var queuePollTimer = null;
-        this.on('newListener', (event, listener) => {
-            if (queuePollTimer == null && (event == 'nowPlaying' || event == 'supportedCommands')) {
-                queuePollTimer = setInterval(() => {
-                    if (that.connection.isOpen) {
-                        that.requestPlaybackQueueWithWait({
-                            length: 100,
-                            location: 0,
-                            artworkSize: {
-                                width: -1,
-                                height: 368
-                            }
-                        }, false).then(() => { }).catch(error => { });
-                    }
-                }, 5000);
-            }
-        });
-        this.on('removeListener', (event, listener) => {
-            if (queuePollTimer != null && (event == 'nowPlaying' || event == 'supportedCommands')) {
-                let listenerCount = that.listenerCount('nowPlaying') + that.listenerCount('supportedCommands');
-                if (listenerCount == 0) {
-                    clearInterval(queuePollTimer);
-                    queuePollTimer = null;
-                }
-            }
-        });
+        this.setupListeners();
     }
     /**
     * Pair with an already discovered AppleTV.
@@ -99,46 +47,30 @@ class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
     * @returns A promise that resolves to the AppleTV object.
     */
     openConnection(credentials) {
-        let that = this;
-        if (credentials) {
-            this.pairingId = credentials.pairingId;
-        }
-        return this.connection
-            .open()
-            .then(() => {
-            return that.sendIntroduction();
-        })
-            .then(() => {
-            that.credentials = credentials;
+        return __awaiter(this, void 0, void 0, function* () {
             if (credentials) {
-                let verifier = new verifier_1.Verifier(that);
-                return verifier.verify()
-                    .then(keys => {
-                    that.credentials.readKey = keys['readKey'];
-                    that.credentials.writeKey = keys['writeKey'];
-                    that.emit('debug', "DEBUG: Keys Read=" + that.credentials.readKey.toString('hex') + ", Write=" + that.credentials.writeKey.toString('hex'));
-                    return that.sendConnectionState();
-                });
+                this.pairingId = credentials.pairingId;
             }
-            else {
-                return null;
-            }
-        })
-            .then(() => {
+            yield this.connection.open();
+            yield this.sendIntroduction();
+            this.credentials = credentials;
             if (credentials) {
-                return that.sendClientUpdatesConfig({
+                let verifier = new verifier_1.Verifier(this);
+                let keys = yield verifier.verify();
+                this.credentials.readKey = keys['readKey'];
+                this.credentials.writeKey = keys['writeKey'];
+                this.emit('debug', "DEBUG: Keys Read=" + this.credentials.readKey.toString('hex') + ", Write=" + this.credentials.writeKey.toString('hex'));
+                yield this.sendConnectionState();
+            }
+            if (credentials) {
+                yield this.sendClientUpdatesConfig({
                     nowPlayingUpdates: true,
                     artworkUpdates: true,
                     keyboardUpdates: false,
                     volumeUpdates: false
                 });
             }
-            else {
-                return null;
-            }
-        })
-            .then(() => {
-            return Promise.resolve(that);
+            return this;
         });
     }
     /**
@@ -156,14 +88,11 @@ class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
     * @returns A promise that resolves to the response from the AppleTV.
     */
     sendMessage(definitionFilename, messageType, body, waitForResponse, priority = 0) {
-        return protobufjs_1.load(path.resolve(__dirname + "/protos/" + definitionFilename + ".proto"))
-            .then(root => {
+        return __awaiter(this, void 0, void 0, function* () {
+            let root = yield protobufjs_1.load(path.resolve(__dirname + "/protos/" + definitionFilename + ".proto"));
             let type = root.lookupType(messageType);
-            return type.create(body);
-        })
-            .then(message => {
-            return this.connection
-                .send(message, waitForResponse, priority, this.credentials);
+            let message = yield type.create(body);
+            return this.connection.send(message, waitForResponse, priority, this.credentials);
         });
     }
     /**
@@ -303,6 +232,79 @@ class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
     }
     sendWakeDevice() {
         return this.sendMessage('WakeDeviceMessage', 'WakeDeviceMessage', {}, false);
+    }
+    onReceiveMessage(message) {
+        this.emit('message', message);
+        if (message.type == message_1.Message.Type.SetStateMessage) {
+            if (message.payload == null) {
+                this.emit('nowPlaying', null);
+                return;
+            }
+            if (message.payload.nowPlayingInfo) {
+                let info = new now_playing_info_1.NowPlayingInfo(message.payload);
+                this.emit('nowPlaying', info);
+            }
+            if (message.payload.supportedCommands) {
+                let commands = (message.payload.supportedCommands.supportedCommands || [])
+                    .map(sc => {
+                    return new supported_command_1.SupportedCommand(sc.command, sc.enabled || false, sc.canScrub || false);
+                });
+                this.emit('supportedCommands', commands);
+            }
+            if (message.payload.playbackQueue) {
+                this.emit('playbackQueue', message.payload.playbackQueue);
+            }
+        }
+    }
+    onNewListener(event, listener) {
+        let that = this;
+        if (this.queuePollTimer == null && (event == 'nowPlaying' || event == 'supportedCommands')) {
+            this.queuePollTimer = setInterval(() => {
+                if (that.connection.isOpen) {
+                    that.requestPlaybackQueueWithWait({
+                        length: 100,
+                        location: 0,
+                        artworkSize: {
+                            width: -1,
+                            height: 368
+                        }
+                    }, false).then(() => { }).catch(error => { });
+                }
+            }, 5000);
+        }
+    }
+    onRemoveListener(event, listener) {
+        if (this.queuePollTimer != null && (event == 'nowPlaying' || event == 'supportedCommands')) {
+            let listenerCount = this.listenerCount('nowPlaying') + this.listenerCount('supportedCommands');
+            if (listenerCount == 0) {
+                clearInterval(this.queuePollTimer);
+                this.queuePollTimer = null;
+            }
+        }
+    }
+    setupListeners() {
+        let that = this;
+        this.connection.on('message', (message) => {
+            that.onReceiveMessage(message);
+        })
+            .on('connect', () => {
+            that.emit('connect');
+        })
+            .on('close', () => {
+            that.emit('close');
+        })
+            .on('error', (error) => {
+            that.emit('error', error);
+        })
+            .on('debug', (message) => {
+            that.emit('debug', message);
+        });
+        this.on('newListener', (event, listener) => {
+            that.onNewListener(event, listener);
+        });
+        this.on('removeListener', (event, listener) => {
+            that.onRemoveListener(event, listener);
+        });
     }
 }
 exports.AppleTV = AppleTV;

@@ -33,6 +33,7 @@ export declare class AppleTV extends EventEmitter {
     pairingId: string;
     credentials: Credentials;
     connection: Connection;
+    private queuePollTimer?;
     constructor(service: Service);
     /**
     * Pair with an already discovered AppleTV.
@@ -85,6 +86,10 @@ export declare class AppleTV extends EventEmitter {
     private sendConnectionState;
     private sendClientUpdatesConfig;
     private sendWakeDevice;
+    private onReceiveMessage;
+    private onNewListener;
+    private onRemoveListener;
+    private setupListeners;
 }
 export declare module AppleTV {
     interface Events {

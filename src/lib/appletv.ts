@@ -48,8 +48,9 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
   public uid: string;
   public pairingId: string = uuid();
   public credentials: Credentials;
-
   public connection: Connection;
+
+  private queuePollTimer?: any;
 
   constructor(private service: Service) {
     super();
@@ -61,69 +62,7 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
     this.uid = service.txtRecord.UniqueIdentifier;
     this.connection = new Connection(this);
 
-    let that = this;
-    this.connection.on('message', (message: Message) => {
-      that.emit('message', message);
-      if (message.type == Message.Type.SetStateMessage) {
-        if (message.payload == null) {
-          that.emit('nowPlaying', null);
-          return;
-        }
-        if (message.payload.nowPlayingInfo) {
-          let info = new NowPlayingInfo(message.payload);
-          that.emit('nowPlaying', info);
-        }
-        if (message.payload.supportedCommands) {
-          let commands = (message.payload.supportedCommands.supportedCommands || [])
-            .map(sc => {
-              return new SupportedCommand(sc.command, sc.enabled || false, sc.canScrub || false);
-            });
-          that.emit('supportedCommands', commands);
-        }
-        if (message.payload.playbackQueue) {
-          that.emit('playbackQueue', message.payload.playbackQueue);
-        }
-      }
-    })
-    .on('connect', () => {
-      that.emit('connect');
-    })
-    .on('close', () => {
-      that.emit('close');
-    })
-    .on('error', (error) => {
-      that.emit('error', error);
-    })
-    .on('debug', (message) => {
-      that.emit('debug', message);
-    });
-
-    var queuePollTimer = null;
-    this.on('newListener', (event, listener) => {
-      if (queuePollTimer == null && (event == 'nowPlaying' || event == 'supportedCommands')) {
-        queuePollTimer = setInterval(() => {
-          if (that.connection.isOpen) {
-            that.requestPlaybackQueueWithWait({
-              length: 100,
-              location: 0,
-              artworkSize: {
-                width: -1,
-                height: 368
-              }
-            }, false).then(() => {}).catch(error => {});
-          }
-        }, 5000);
-      }
-    });
-    this.on('removeListener', (event, listener) => {
-      if (queuePollTimer != null && (event == 'nowPlaying' || event == 'supportedCommands')) {
-        let listenerCount = that.listenerCount('nowPlaying') + that.listenerCount('supportedCommands');
-        if (listenerCount == 0) {
-          clearInterval(queuePollTimer);
-          queuePollTimer = null;
-        }
-      }
-    });
+    this.setupListeners();
   }
 
   /**
@@ -140,48 +79,33 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
   * @param credentials  The credentials object for this AppleTV
   * @returns A promise that resolves to the AppleTV object.
   */
-  openConnection(credentials?: Credentials): Promise<AppleTV> {
-    let that = this;
-
+  async openConnection(credentials?: Credentials): Promise<AppleTV> {
     if (credentials) {
       this.pairingId = credentials.pairingId;      
     }
     
-    return this.connection
-      .open()
-      .then(() => {
-        return that.sendIntroduction();
-      })
-      .then(() => {
-        that.credentials = credentials;
-        if (credentials) {
-          let verifier = new Verifier(that);
-          return verifier.verify()
-            .then(keys => {
-              that.credentials.readKey = keys['readKey'];
-              that.credentials.writeKey = keys['writeKey'];
-              that.emit('debug', "DEBUG: Keys Read=" + that.credentials.readKey.toString('hex') + ", Write=" + that.credentials.writeKey.toString('hex'));
-              return that.sendConnectionState();
-            });
-        } else {
-          return null;
-        }
-      })
-      .then(() => {
-        if (credentials) {
-          return that.sendClientUpdatesConfig({
-            nowPlayingUpdates: true,
-            artworkUpdates: true,
-            keyboardUpdates: false,
-            volumeUpdates: false
-          });
-        } else {
-          return null;
-        }
-      })
-      .then(() => {
-        return Promise.resolve(that);
+    await this.connection.open();
+    await this.sendIntroduction();
+    this.credentials = credentials;
+    if (credentials) {
+      let verifier = new Verifier(this);
+      let keys = await verifier.verify();
+      this.credentials.readKey = keys['readKey'];
+      this.credentials.writeKey = keys['writeKey'];
+      this.emit('debug', "DEBUG: Keys Read=" + this.credentials.readKey.toString('hex') + ", Write=" + this.credentials.writeKey.toString('hex'));
+      await this.sendConnectionState();
+    }
+
+    if (credentials) {
+      await this.sendClientUpdatesConfig({
+        nowPlayingUpdates: true,
+        artworkUpdates: true,
+        keyboardUpdates: false,
+        volumeUpdates: false
       });
+    }
+
+    return this;
   }
 
   /**
@@ -199,16 +123,12 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
   * @param waitForResponse  Whether or not to wait for a response before resolving the Promise.
   * @returns A promise that resolves to the response from the AppleTV.
   */
-  sendMessage(definitionFilename: string, messageType: string, body: {}, waitForResponse: boolean, priority: number = 0): Promise<Message> {
-    return load(path.resolve(__dirname + "/protos/" + definitionFilename + ".proto"))
-      .then(root => {
-        let type = root.lookupType(messageType);
-        return type.create(body);
-      })
-      .then(message => {
-        return this.connection
-          .send(message, waitForResponse, priority, this.credentials);
-      });
+  async sendMessage(definitionFilename: string, messageType: string, body: {}, waitForResponse: boolean, priority: number = 0): Promise<Message> {
+    let root = await load(path.resolve(__dirname + "/protos/" + definitionFilename + ".proto"));
+    let type = root.lookupType(messageType);
+    let message = await type.create(body);
+
+    return this.connection.send(message, waitForResponse, priority, this.credentials);
   }
 
   /**
@@ -360,6 +280,84 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
 
   private sendWakeDevice(): Promise<Message> {
     return this.sendMessage('WakeDeviceMessage', 'WakeDeviceMessage', {}, false);
+  }
+
+  private onReceiveMessage(message: Message) {
+    this.emit('message', message);
+    if (message.type == Message.Type.SetStateMessage) {
+      if (message.payload == null) {
+        this.emit('nowPlaying', null);
+        return;
+      }
+      if (message.payload.nowPlayingInfo) {
+        let info = new NowPlayingInfo(message.payload);
+        this.emit('nowPlaying', info);
+      }
+      if (message.payload.supportedCommands) {
+        let commands = (message.payload.supportedCommands.supportedCommands || [])
+          .map(sc => {
+            return new SupportedCommand(sc.command, sc.enabled || false, sc.canScrub || false);
+          });
+        this.emit('supportedCommands', commands);
+      }
+      if (message.payload.playbackQueue) {
+        this.emit('playbackQueue', message.payload.playbackQueue);
+      }
+    }
+  }
+
+  private onNewListener(event: string, listener: any) {
+    let that = this;
+    if (this.queuePollTimer == null && (event == 'nowPlaying' || event == 'supportedCommands')) {
+      this.queuePollTimer = setInterval(() => {
+        if (that.connection.isOpen) {
+          that.requestPlaybackQueueWithWait({
+            length: 100,
+            location: 0,
+            artworkSize: {
+              width: -1,
+              height: 368
+            }
+          }, false).then(() => {}).catch(error => {});
+        }
+      }, 5000);
+    }
+  }
+
+  private onRemoveListener(event: string, listener: any) {
+    if (this.queuePollTimer != null && (event == 'nowPlaying' || event == 'supportedCommands')) {
+      let listenerCount = this.listenerCount('nowPlaying') + this.listenerCount('supportedCommands');
+      if (listenerCount == 0) {
+        clearInterval(this.queuePollTimer);
+        this.queuePollTimer = null;
+      }
+    }
+  }
+
+  private setupListeners() {
+    let that = this;
+    this.connection.on('message', (message: Message) => {
+      that.onReceiveMessage(message);
+    })
+    .on('connect', () => {
+      that.emit('connect');
+    })
+    .on('close', () => {
+      that.emit('close');
+    })
+    .on('error', (error) => {
+      that.emit('error', error);
+    })
+    .on('debug', (message) => {
+      that.emit('debug', message);
+    });
+
+    this.on('newListener', (event, listener) => {
+      that.onNewListener(event, listener);
+    });
+    this.on('removeListener', (event, listener) => {
+      that.onRemoveListener(event, listener);
+    });
   }
 }
 

@@ -17,47 +17,7 @@ class Connection extends events_1.EventEmitter /* <Connection.Events> */ {
         this.callbacks = new Map();
         this.buffer = Buffer.alloc(0);
         this.socket = socket || new net_1.Socket();
-        let that = this;
-        this.socket.on('data', (data) => {
-            try {
-                that.buffer = Buffer.concat([that.buffer, data]);
-                let length = varint.decode(that.buffer);
-                let messageBytes = that.buffer.slice(varint.decode.bytes, length + varint.decode.bytes);
-                if (messageBytes.length < length) {
-                    that.emit('debug', "Message length mismatch");
-                    return;
-                }
-                that.buffer = that.buffer.slice(length + varint.decode.bytes);
-                that.emit('debug', "DEBUG: <<<< Received Data=" + messageBytes.toString('hex'));
-                if (device.credentials && device.credentials.readKey) {
-                    messageBytes = device.credentials.decrypt(messageBytes);
-                    that.emit('debug', "DEBUG: Decrypted Data=" + messageBytes.toString('hex'));
-                }
-                that.decodeMessage(messageBytes)
-                    .then(protoMessage => {
-                    let message = new message_1.Message(protoMessage);
-                    that.emit('message', message);
-                    that.executeCallbacks(message.identifier, message);
-                })
-                    .catch(error => {
-                    that.emit('error', error);
-                });
-            }
-            catch (error) {
-                that.emit('error', error);
-            }
-        });
-        this.socket.on('connect', () => {
-            that.emit('connect');
-            that.isOpen = true;
-        });
-        this.socket.on('close', () => {
-            that.emit('close');
-            that.isOpen = false;
-        });
-        this.socket.on('error', (error) => {
-            that.emit('error', error);
-        });
+        this.setupListeners();
     }
     addCallback(identifier, callback) {
         if (this.callbacks.has(identifier)) {
@@ -205,6 +165,49 @@ class Connection extends events_1.EventEmitter /* <Connection.Events> */ {
             .then(value => {
             that.removeListener('message', handler);
             return value;
+        });
+    }
+    setupListeners() {
+        let that = this;
+        this.socket.on('data', (data) => {
+            try {
+                that.buffer = Buffer.concat([that.buffer, data]);
+                let length = varint.decode(that.buffer);
+                let messageBytes = that.buffer.slice(varint.decode.bytes, length + varint.decode.bytes);
+                if (messageBytes.length < length) {
+                    that.emit('debug', "Message length mismatch");
+                    return;
+                }
+                that.buffer = that.buffer.slice(length + varint.decode.bytes);
+                that.emit('debug', "DEBUG: <<<< Received Data=" + messageBytes.toString('hex'));
+                if (that.device.credentials && that.device.credentials.readKey) {
+                    messageBytes = that.device.credentials.decrypt(messageBytes);
+                    that.emit('debug', "DEBUG: Decrypted Data=" + messageBytes.toString('hex'));
+                }
+                that.decodeMessage(messageBytes)
+                    .then(protoMessage => {
+                    let message = new message_1.Message(protoMessage);
+                    that.emit('message', message);
+                    that.executeCallbacks(message.identifier, message);
+                })
+                    .catch(error => {
+                    that.emit('error', error);
+                });
+            }
+            catch (error) {
+                that.emit('error', error);
+            }
+        });
+        this.socket.on('connect', () => {
+            that.emit('connect');
+            that.isOpen = true;
+        });
+        this.socket.on('close', () => {
+            that.emit('close');
+            that.isOpen = false;
+        });
+        this.socket.on('error', (error) => {
+            that.emit('error', error);
         });
     }
 }
