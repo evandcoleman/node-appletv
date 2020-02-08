@@ -1,6 +1,7 @@
 /// <reference types="node" />
 import { Service } from 'mdns';
 import { EventEmitter } from 'events';
+import { Socket } from 'net';
 import { Connection } from './connection';
 import { Credentials } from './credentials';
 import { NowPlayingInfo } from './now-playing-info';
@@ -34,7 +35,7 @@ export declare class AppleTV extends EventEmitter {
     credentials: Credentials;
     connection: Connection;
     private queuePollTimer?;
-    constructor(service: Service);
+    constructor(service: Service, socket?: Socket);
     /**
     * Pair with an already discovered AppleTV.
     * @returns A promise that resolves to the AppleTV object.
@@ -72,6 +73,12 @@ export declare class AppleTV extends EventEmitter {
     * @returns A Promise that resolves to a NewPlayingInfo object.
     */
     requestPlaybackQueue(options: PlaybackQueueRequestOptions): Promise<NowPlayingInfo>;
+    /**
+    * Requests the current playback queue from the Apple TV.
+    * @param options Options to send
+    * @returns A Promise that resolves to a NewPlayingInfo object.
+    */
+    requestArtwork(width?: number, height?: number): Promise<Buffer>;
     /**
     * Send a key command to the AppleTV.
     * @param key The key to press.

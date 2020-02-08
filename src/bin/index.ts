@@ -7,6 +7,8 @@ import { NowPlayingInfo } from '../lib/now-playing-info';
 import { Message } from '../lib/message';
 import { scan } from './scan';
 import { pair } from './pair';
+import { writeFile } from 'fs';
+import { promisify } from 'util';
 
 const project = require('../../package.json')
 
@@ -60,6 +62,32 @@ cli
       let device = await openDevice(credentials, logger);
       await device.sendKeyCommand(AppleTV.key(args["command"]))
       logger.info("Success!");
+      process.exit();
+    } catch (error) {
+      logger.error(error.message);
+      logger.debug(error.stack);
+      process.exit();
+    }
+  });
+
+cli
+  .command('artwork', 'Retreive the artwork for the currently playing item')
+  .option('--output <path>', 'Output path for the artwork image', cli.STRING) 
+  .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
+  .action(async (args, options, logger) => {
+    if (!options.credentials) {
+      logger.error("Credentials are required. Pair first.");
+      process.exit();
+    }
+    let credentials = Credentials.parse(options.credentials);
+    try {
+      let device = await openDevice(credentials, logger);
+      let data = await device.requestArtwork();
+      if (options.output) {
+        await promisify(writeFile)(options.output, data);
+      } else {
+        logger.info(data.toString('hex'));
+      }
       process.exit();
     } catch (error) {
       logger.error(error.message);

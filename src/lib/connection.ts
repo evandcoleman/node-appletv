@@ -194,36 +194,41 @@ export class Connection extends EventEmitter /* <Connection.Events> */ {
     });
   }
 
+  async handleChunk(data: Buffer): Promise<Message> {
+    this.buffer = Buffer.concat([this.buffer, data]);
+    let length = varint.decode(this.buffer);
+    let messageBytes = this.buffer.slice(varint.decode.bytes, length + varint.decode.bytes);
+
+    if (messageBytes.length < length) {
+      this.emit('debug', "Message length mismatch");
+      return null;
+    }
+
+    this.buffer = this.buffer.slice(length + varint.decode.bytes);
+
+    this.emit('debug', "DEBUG: <<<< Received Data=" + messageBytes.toString('hex'));
+  
+    if (this.device.credentials && this.device.credentials.readKey) {
+      messageBytes = this.device.credentials.decrypt(messageBytes);
+      this.emit('debug', "DEBUG: Decrypted Data=" + messageBytes.toString('hex'));
+    }
+    
+    let protoMessage = await this.decodeMessage(messageBytes);
+    let message = new Message(protoMessage);
+    
+    return message;
+  }
+
   private setupListeners() {
     let that = this;
     this.socket.on('data', (data) => {
       try {
-        that.buffer = Buffer.concat([that.buffer, data]);
-        let length = varint.decode(that.buffer);
-        let messageBytes = that.buffer.slice(varint.decode.bytes, length + varint.decode.bytes);
-
-        if (messageBytes.length < length) {
-          that.emit('debug', "Message length mismatch");
-          return;
-        }
-
-        that.buffer = that.buffer.slice(length + varint.decode.bytes);
-
-        that.emit('debug', "DEBUG: <<<< Received Data=" + messageBytes.toString('hex'));
-      
-        if (that.device.credentials && that.device.credentials.readKey) {
-          messageBytes = that.device.credentials.decrypt(messageBytes);
-          that.emit('debug', "DEBUG: Decrypted Data=" + messageBytes.toString('hex'));
-        }
-        
-        that.decodeMessage(messageBytes)
-          .then(protoMessage => {
-            let message = new Message(protoMessage);
-            that.emit('message', message);
-            that.executeCallbacks(message.identifier, message);
-          })
-          .catch(error => {
-            that.emit('error', error);
+        that.handleChunk(data)
+          .then((message) => {
+            if (message) {
+              that.emit('message', message);
+              that.executeCallbacks(message.identifier, message);
+            }
           });
       } catch(error) {
         that.emit('error', error);

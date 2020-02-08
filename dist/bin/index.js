@@ -15,6 +15,8 @@ const appletv_1 = require("../lib/appletv");
 const credentials_1 = require("../lib/credentials");
 const scan_1 = require("./scan");
 const pair_1 = require("./pair");
+const fs_1 = require("fs");
+const util_1 = require("util");
 const project = require('../../package.json');
 function openDevice(credentials, logger) {
     return __awaiter(this, void 0, void 0, function* () {
@@ -67,6 +69,33 @@ cli
         let device = yield openDevice(credentials, logger);
         yield device.sendKeyCommand(appletv_1.AppleTV.key(args["command"]));
         logger.info("Success!");
+        process.exit();
+    }
+    catch (error) {
+        logger.error(error.message);
+        logger.debug(error.stack);
+        process.exit();
+    }
+}));
+cli
+    .command('artwork', 'Retreive the artwork for the currently playing item')
+    .option('--output <path>', 'Output path for the artwork image', cli.STRING)
+    .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING)
+    .action((args, options, logger) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!options.credentials) {
+        logger.error("Credentials are required. Pair first.");
+        process.exit();
+    }
+    let credentials = credentials_1.Credentials.parse(options.credentials);
+    try {
+        let device = yield openDevice(credentials, logger);
+        let data = yield device.requestArtwork();
+        if (options.output) {
+            yield util_1.promisify(fs_1.writeFile)(options.output, data);
+        }
+        else {
+            logger.info(data.toString('hex'));
+        }
         process.exit();
     }
     catch (error) {
