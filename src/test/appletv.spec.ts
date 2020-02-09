@@ -58,7 +58,9 @@ describe('apple tv tests', function() {
     let width = 640;
     let height = 480;
     await this.device.openConnection();
-    await this.device.requestArtwork(width, height);
+    try {
+      await this.device.requestArtwork(width, height);
+    } catch (error) {}
 
     let messages = this.sentMessages();
     
