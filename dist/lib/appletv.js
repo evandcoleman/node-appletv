@@ -143,7 +143,13 @@ class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
                 length: 1,
                 location: 0
             }, true);
-            return (_e = (_d = (_c = (_b = (_a = response) === null || _a === void 0 ? void 0 : _a.payload) === null || _b === void 0 ? void 0 : _b.playbackQueue) === null || _c === void 0 ? void 0 : _c.contentItems) === null || _d === void 0 ? void 0 : _d[0]) === null || _e === void 0 ? void 0 : _e.artworkData;
+            let data = (_e = (_d = (_c = (_b = (_a = response) === null || _a === void 0 ? void 0 : _a.payload) === null || _b === void 0 ? void 0 : _b.playbackQueue) === null || _c === void 0 ? void 0 : _c.contentItems) === null || _d === void 0 ? void 0 : _d[0]) === null || _e === void 0 ? void 0 : _e.artworkData;
+            if (data) {
+                return data;
+            }
+            else {
+                throw new Error("No artwork available");
+            }
         });
     }
     /**

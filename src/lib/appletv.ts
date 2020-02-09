@@ -180,7 +180,13 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
       location: 0
     }, true);
     
-    return response?.payload?.playbackQueue?.contentItems?.[0]?.artworkData;
+    let data = response?.payload?.playbackQueue?.contentItems?.[0]?.artworkData;
+
+    if (data) {
+      return data;
+    } else {
+      throw new Error("No artwork available");
+    }
   }
 
   /**
