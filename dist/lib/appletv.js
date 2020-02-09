@@ -21,7 +21,7 @@ const supported_command_1 = require("./supported-command");
 const message_1 = require("./message");
 const number_1 = require("./util/number");
 class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
-    constructor(service) {
+    constructor(service, socket) {
         super();
         this.service = service;
         this.pairingId = uuid_1.v4();
@@ -30,7 +30,7 @@ class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
         this.address = service.addresses.filter(x => x.includes('.'))[0];
         this.port = service.port;
         this.uid = service.txtRecord.UniqueIdentifier;
-        this.connection = new connection_1.Connection(this);
+        this.connection = new connection_1.Connection(this, socket);
         this.setupListeners();
     }
     /**
@@ -125,6 +125,32 @@ class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
     */
     requestPlaybackQueue(options) {
         return this.requestPlaybackQueueWithWait(options, true);
+    }
+    /**
+    * Requests the current artwork from the Apple TV.
+    * @param width Image width
+    * @param height Image height
+    * @returns A Promise that resolves to a Buffer of data.
+    */
+    requestArtwork(width = 400, height = 400) {
+        var _a, _b, _c, _d, _e;
+        return __awaiter(this, void 0, void 0, function* () {
+            let response = yield this.requestPlaybackQueueWithWait({
+                artworkSize: {
+                    width: width,
+                    height: height
+                },
+                length: 1,
+                location: 0
+            }, true);
+            let data = (_e = (_d = (_c = (_b = (_a = response) === null || _a === void 0 ? void 0 : _a.payload) === null || _b === void 0 ? void 0 : _b.playbackQueue) === null || _c === void 0 ? void 0 : _c.contentItems) === null || _d === void 0 ? void 0 : _d[0]) === null || _e === void 0 ? void 0 : _e.artworkData;
+            if (data) {
+                return data;
+            }
+            else {
+                throw new Error("No artwork available");
+            }
+        });
     }
     /**
     * Send a key command to the AppleTV.

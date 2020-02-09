@@ -52,7 +52,7 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
 
   private queuePollTimer?: any;
 
-  constructor(private service: Service) {
+  constructor(private service: Service, socket?: Socket) {
     super();
 
     this.service = service;
@@ -60,7 +60,7 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
     this.address = service.addresses.filter(x => x.includes('.'))[0];
     this.port = service.port;
     this.uid = service.txtRecord.UniqueIdentifier;
-    this.connection = new Connection(this);
+    this.connection = new Connection(this, socket);
 
     this.setupListeners();
   }
@@ -162,6 +162,31 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
   */
   requestPlaybackQueue(options: PlaybackQueueRequestOptions): Promise<NowPlayingInfo> {
     return this.requestPlaybackQueueWithWait(options, true);
+  }
+
+  /**
+  * Requests the current artwork from the Apple TV.
+  * @param width Image width
+  * @param height Image height
+  * @returns A Promise that resolves to a Buffer of data.
+  */
+  async requestArtwork(width: number = 400, height: number = 400): Promise<Buffer> {
+    let response = await this.requestPlaybackQueueWithWait({
+      artworkSize: {
+        width: width,
+        height: height
+      },
+      length: 1,
+      location: 0
+    }, true);
+    
+    let data = response?.payload?.playbackQueue?.contentItems?.[0]?.artworkData;
+
+    if (data) {
+      return data;
+    } else {
+      throw new Error("No artwork available");
+    }
   }
 
   /**

@@ -1,5 +1,6 @@
 import { Credentials } from './lib/credentials';
 import { AppleTV } from './lib/appletv';
+import { Connection } from './lib/connection';
 import { Browser } from './lib/browser';
 import { NowPlayingInfo } from './lib/now-playing-info';
 import { Message } from './lib/message';
@@ -27,6 +28,7 @@ export function parseCredentials(text: string): Credentials {
 
 export {
   AppleTV,
+  Connection,
   Browser,
   NowPlayingInfo,
   Credentials,
