@@ -74,9 +74,10 @@ export declare class AppleTV extends EventEmitter {
     */
     requestPlaybackQueue(options: PlaybackQueueRequestOptions): Promise<NowPlayingInfo>;
     /**
-    * Requests the current playback queue from the Apple TV.
-    * @param options Options to send
-    * @returns A Promise that resolves to a NewPlayingInfo object.
+    * Requests the current artwork from the Apple TV.
+    * @param width Image width
+    * @param height Image height
+    * @returns A Promise that resolves to a Buffer of data.
     */
     requestArtwork(width?: number, height?: number): Promise<Buffer>;
     /**

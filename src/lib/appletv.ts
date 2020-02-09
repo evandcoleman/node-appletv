@@ -180,7 +180,7 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
       location: 0
     }, true);
     
-    return response.payload?.playbackQueue?.contentItems?.[0]?.artworkData;
+    return response?.payload?.playbackQueue?.contentItems?.[0]?.artworkData;
   }
 
   /**
