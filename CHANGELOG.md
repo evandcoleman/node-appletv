@@ -5,6 +5,7 @@
 #### Added
 
 * Ability to request now playing artwork https://github.com/evandcoleman/node-appletv/pull/36 by @evandcoleman
+* Support for wake, home, and volume commands https://github.com/evandcoleman/node-appletv/pull/38 by @evandcoleman
 
 ## 1.0.11
 
