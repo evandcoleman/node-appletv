@@ -8,7 +8,6 @@ import 'mocha';
 
 describe('apple tv tests', function() {
   beforeEach(function() {
-    // this.fake = sinon.fake();
     let socket = new Socket({});
 
     sinon.stub(socket, 'write');
@@ -33,6 +32,7 @@ describe('apple tv tests', function() {
     }, socket);
 
     this.fake = sinon.stub(this.device.connection, 'sendProtocolMessage');
+    this.device.connection.isOpen = true;
 
     this.sentMessages = function() {
       var messages = [];
@@ -70,5 +70,31 @@ describe('apple tv tests', function() {
     expect(messages[1].payload.artworkHeight).to.equal(height);
     expect(messages[1].payload.length).to.equal(1);
     expect(messages[1].payload.location).to.equal(0);
+  });
+
+  it('should press and release menu', async function() {
+    await this.device.openConnection();
+    await this.device.sendKeyCommand(AppleTV.Key.Menu);
+
+    let messages = this.sentMessages();
+    
+    expect(messages.length).to.equal(3);
+    expect(messages[1].type).to.equal(Message.Type.SendHidEventMessage);
+    expect(messages[2].type).to.equal(Message.Type.SendHidEventMessage);
+  });
+
+  it('should read now playing', async function() {
+    await this.device.openConnection();
+
+    var spy = sinon.spy();
+    this.device.on('nowPlaying', spy);
+    this.device.connection.emit('message', <Message>require('./fixtures/now-playing.json'));
+    
+    let messages = this.sentMessages();
+    
+    expect(messages.length).to.equal(1);
+    expect(spy.lastCall.lastArg.title).to.equal('Seinfeld');
+    expect(spy.lastCall.lastArg.appDisplayName).to.equal('Hulu');
+    expect(spy.lastCall.lastArg.appBundleIdentifier).to.equal('com.hulu.plus');
   });
 });

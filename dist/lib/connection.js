@@ -117,13 +117,13 @@ class Connection extends events_1.EventEmitter /* <Connection.Events> */ {
             if (credentials && credentials.writeKey) {
                 let encrypted = credentials.encrypt(data);
                 that.emit('debug', "DEBUG: >>>> Send Encrypted Data=" + encrypted.toString('hex'));
-                that.emit('debug', "DEBUG: >>>> Send Protobuf=" + JSON.stringify(message.toJSON(), null, 2));
+                that.emit('debug', "DEBUG: >>>> Send Protobuf=" + JSON.stringify(new message_1.Message(message), null, 2));
                 let messageLength = Buffer.from(varint.encode(encrypted.length));
                 let bytes = Buffer.concat([messageLength, encrypted]);
                 that.socket.write(bytes);
             }
             else {
-                that.emit('debug', "DEBUG: >>>> Send Protobuf=" + JSON.stringify(message.toJSON(), null, 2));
+                that.emit('debug', "DEBUG: >>>> Send Protobuf=" + JSON.stringify(new message_1.Message(message), null, 2));
                 let messageLength = Buffer.from(varint.encode(data.length));
                 let bytes = Buffer.concat([messageLength, data]);
                 that.socket.write(bytes);
@@ -148,7 +148,7 @@ class Connection extends events_1.EventEmitter /* <Connection.Events> */ {
                 .then(root => {
                 let ProtocolMessage = root.lookupType("ProtocolMessage");
                 let message = ProtocolMessage.decode(data);
-                that.emit('debug', "DEBUG: <<<< Received Protobuf=" + JSON.stringify(message.toJSON(), null, 2));
+                that.emit('debug', "DEBUG: <<<< Received Protobuf=" + JSON.stringify(new message_1.Message(message), null, 2));
                 return message;
             });
         });

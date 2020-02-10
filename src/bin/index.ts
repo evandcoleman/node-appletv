@@ -50,7 +50,7 @@ cli
 
 cli
   .command('command', 'Send a command to an Apple TV')
-  .argument('<command>', 'The command to send', /^up|down|left|right|menu|play|pause|next|previous|suspend$/)
+  .argument('<command>', 'The command to send', /^up|down|left|right|menu|play|pause|next|previous|suspend|wake|home|volumeup|volumedown$/)
   .option('--credentials <credentials>', 'The device credentials from pairing', cli.STRING) 
   .action(async (args, options, logger) => {
     if (!options.credentials) {

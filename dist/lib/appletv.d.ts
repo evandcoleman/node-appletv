@@ -125,7 +125,11 @@ export declare module AppleTV {
         Next = 7,
         Previous = 8,
         Suspend = 9,
-        Select = 10
+        Wake = 10,
+        Select = 11,
+        Home = 12,
+        VolumeUp = 13,
+        VolumeDown = 14
     }
     /** Convert a string representation of a key to the correct enum type.
     * @param string  The string.
