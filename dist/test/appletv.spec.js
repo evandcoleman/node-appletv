@@ -13,11 +13,11 @@ const appletv_1 = require("../lib/appletv");
 const message_1 = require("../lib/message");
 const chai_1 = require("chai");
 const net_1 = require("net");
+const util_1 = require("util");
 const sinon = require("sinon");
 require("mocha");
 describe('apple tv tests', function () {
     beforeEach(function () {
-        // this.fake = sinon.fake();
         let socket = new net_1.Socket({});
         sinon.stub(socket, 'write');
         sinon.stub(socket, 'connect').callsFake(function (port, host, callback) {
@@ -39,6 +39,7 @@ describe('apple tv tests', function () {
             }
         }, socket);
         this.fake = sinon.stub(this.device.connection, 'sendProtocolMessage');
+        this.device.connection.isOpen = true;
         this.sentMessages = function () {
             var messages = [];
             for (var i = 0; i < this.fake.callCount; i++) {
@@ -71,6 +72,29 @@ describe('apple tv tests', function () {
             chai_1.expect(messages[1].payload.artworkHeight).to.equal(height);
             chai_1.expect(messages[1].payload.length).to.equal(1);
             chai_1.expect(messages[1].payload.location).to.equal(0);
+        });
+    });
+    it('should press and release menu', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.device.openConnection();
+            yield this.device.sendKeyCommand(appletv_1.AppleTV.Key.Menu);
+            let messages = this.sentMessages();
+            chai_1.expect(messages.length).to.equal(3);
+            chai_1.expect(messages[1].type).to.equal(message_1.Message.Type.SendHidEventMessage);
+            chai_1.expect(messages[2].type).to.equal(message_1.Message.Type.SendHidEventMessage);
+        });
+    });
+    it('should read now playing', function () {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.device.openConnection();
+            setTimeout(function () {
+                this.device.connection.emit('message', require('./fixtures/now-playing.json'));
+            }.bind(this), 500);
+            let nowPlaying = yield util_1.promisify(this.device.on).bind(this.device)('nowPlaying');
+            console.log(nowPlaying);
+            let messages = this.sentMessages();
+            chai_1.expect(messages.length).to.equal(2);
+            chai_1.expect(messages[1].type).to.equal(message_1.Message.Type.SetStateMessage);
         });
     });
 });

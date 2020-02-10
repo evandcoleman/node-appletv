@@ -1,0 +1,174 @@
+{
+  "message": {
+    "type": "SET_STATE_MESSAGE",
+    "priority": 0,
+    ".setStateMessage": {
+      "nowPlayingInfo": {
+        "duration": 4001.2299999999996,
+        "elapsedTime": 3901.299601862999,
+        "playbackRate": 1,
+        "timestamp": 602989141.971391,
+        "title": "Seinfeld",
+        "uniqueIdentifier": "18446744073106635240",
+        "isAlwaysLive": false
+      },
+      "supportedCommands": {
+        "supportedCommands": [
+          {
+            "command": "Play",
+            "enabled": true
+          },
+          {
+            "command": "Pause",
+            "enabled": true
+          },
+          {
+            "command": "TogglePlayPause",
+            "enabled": true
+          },
+          {
+            "command": "EnableLanguageOption",
+            "enabled": true
+          },
+          {
+            "command": "DisableLanguageOption",
+            "enabled": true
+          },
+          {
+            "command": "Stop",
+            "enabled": true
+          },
+          {
+            "command": "SkipForward",
+            "enabled": true,
+            "preferredIntervals": [
+              10
+            ]
+          },
+          {
+            "command": "SkipBackward",
+            "enabled": true,
+            "preferredIntervals": [
+              10
+            ]
+          },
+          {
+            "command": "BeginFastForward",
+            "enabled": true
+          },
+          {
+            "command": "BeginRewind",
+            "enabled": true
+          },
+          {
+            "command": "ChangePlaybackRate",
+            "enabled": true
+          },
+          {
+            "command": "SeekToPlaybackPosition",
+            "enabled": true,
+            "canScrub": 0
+          },
+          {
+            "command": "NextInContext",
+            "enabled": true
+          },
+          {
+            "command": "PreviousInContext",
+            "enabled": true
+          }
+        ]
+      },
+      "displayID": "com.hulu.plus",
+      "displayName": "Hulu",
+      "playbackState": "Playing",
+      "playbackQueueCapabilities": {},
+      "playbackStateTimestamp": 602987248.872297
+    }
+  },
+  "type": 4,
+  "identifier": "",
+  "payload": {
+    "nowPlayingInfo": {
+      "duration": 4001.2299999999996,
+      "elapsedTime": 3901.299601862999,
+      "playbackRate": 1,
+      "timestamp": 602989141.971391,
+      "title": "Seinfeld",
+      "uniqueIdentifier": "18446744073106635240",
+      "isAlwaysLive": false
+    },
+    "supportedCommands": {
+      "supportedCommands": [
+        {
+          "command": "Play",
+          "enabled": true
+        },
+        {
+          "command": "Pause",
+          "enabled": true
+        },
+        {
+          "command": "TogglePlayPause",
+          "enabled": true
+        },
+        {
+          "command": "EnableLanguageOption",
+          "enabled": true
+        },
+        {
+          "command": "DisableLanguageOption",
+          "enabled": true
+        },
+        {
+          "command": "Stop",
+          "enabled": true
+        },
+        {
+          "command": "SkipForward",
+          "enabled": true,
+          "preferredIntervals": [
+            10
+          ]
+        },
+        {
+          "command": "SkipBackward",
+          "enabled": true,
+          "preferredIntervals": [
+            10
+          ]
+        },
+        {
+          "command": "BeginFastForward",
+          "enabled": true
+        },
+        {
+          "command": "BeginRewind",
+          "enabled": true
+        },
+        {
+          "command": "ChangePlaybackRate",
+          "enabled": true
+        },
+        {
+          "command": "SeekToPlaybackPosition",
+          "enabled": true,
+          "canScrub": 0
+        },
+        {
+          "command": "NextInContext",
+          "enabled": true
+        },
+        {
+          "command": "PreviousInContext",
+          "enabled": true
+        }
+      ]
+    },
+    "displayID": "com.hulu.plus",
+    "displayName": "Hulu",
+    "playbackState": "Playing",
+    "playbackQueueCapabilities": {},
+    "playbackStateTimestamp": 602987248.872297
+  }
+}
