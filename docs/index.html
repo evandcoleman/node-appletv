@@ -54,7 +54,7 @@
 					<a href="globals.html">Globals</a>
 				</li>
 			</ul>
-			<h1> node-appletv</h1>
+			<h1>node-appletv</h1>
 		</div>
 	</div>
 </header>
@@ -62,25 +62,35 @@
 	<div class="row">
 		<div class="col-8 col-content">
 			<div class="tsd-panel tsd-typography">
-				<h1 id="node-appletv">node-appletv</h1>
+				<a href="#node-appletv" id="node-appletv" style="color: inherit; text-decoration: none;">
+					<h1>node-appletv</h1>
+				</a>
 				<blockquote>
 					<p>A node module for interacting with an Apple TV (4th-generation or later) over the Media Remote Protocol.</p>
 				</blockquote>
 				<p><a href="https://badge.fury.io/js/node-appletv"><img src="https://badge.fury.io/js/node-appletv.svg" alt="npm version"></a>
+					<a href="https://travis-ci.org/evandcoleman/node-appletv"><img src="https://travis-ci.org/evandcoleman/node-appletv.svg?branch=master" alt="CI"></a>
 				<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a></p>
 				<p><img src="images/pairing.gif" alt=""></p>
-				<h2 id="overview">Overview</h2>
+				<a href="#overview" id="overview" style="color: inherit; text-decoration: none;">
+					<h2>Overview</h2>
+				</a>
 				<p><code>node-appletv</code> is a <code>node.js</code> implementation of the Media Remote Protocol which shipped with the 4th-generation Apple TV. This is the protocol that the Apple TV remote app uses, so this should enable the creation of an Apple TV remote app for various platforms. It can also be used in a <code>homebridge</code> plugin to connect Apple TV events to HomeKit and vice versa. <code>node-appletv</code> can be used as a standalone command line application, or as a module in your own node app. Keep reading for installation and usage instructions.</p>
-				<h2 id="documentation">Documentation</h2>
-				<p>Developer documentation for <code>node-appletv</code> can be found <a href="https://edc1591.github.io/node-appletv/">here</a>.</p>
-				<h2 id="usage">Usage</h2>
-				<h3 id="as-a-standalone-cli">As a standalone cli</h3>
-				<pre><code class="lang-bash"><span class="hljs-comment"># Install</span>
+				<a href="#documentation" id="documentation" style="color: inherit; text-decoration: none;">
+					<h2>Documentation</h2>
+				</a>
+				<p>Developer documentation for <code>node-appletv</code> can be found <a href="https://evandcoleman.github.io/node-appletv/">here</a>.</p>
+				<a href="#usage" id="usage" style="color: inherit; text-decoration: none;">
+					<h2>Usage</h2>
+				</a>
+				<a href="#as-a-standalone-cli" id="as-a-standalone-cli" style="color: inherit; text-decoration: none;">
+					<h3>As a standalone cli</h3>
+				</a>
+				<pre><code class="language-bash"><span class="hljs-comment"># Install</span>
 $ npm install -g node-appletv
 
 <span class="hljs-comment"># Display built-in help</span>
-$ appletv --<span class="hljs-built_in">help</span>
-</code></pre>
+$ appletv --<span class="hljs-built_in">help</span></code></pre>
 				<p>The <code>appletv</code> cli supports several commands, such as:</p>
 				<p><code>pair</code>: Scans for Apple TVs on the local network and initiates the pairing process</p>
 				<p><code>command &lt;command&gt;</code>: Execute a command on an Apple TV (play, pause, menu, etc.)</p>
@@ -88,74 +98,65 @@ $ appletv --<span class="hljs-built_in">help</span>
 				<p><code>queue</code>: Requests the current playback queue from an Apple TV</p>
 				<p><code>messages</code>: Logs all raw messages from an Apple TV</p>
 				<p><code>help &lt;command&gt;</code>: Get help for a specific command</p>
-				<h3 id="as-a-node-module">As a node module</h3>
-				<pre><code class="lang-bash">$ npm install --save node-appletv
-</code></pre>
+				<a href="#as-a-node-module" id="as-a-node-module" style="color: inherit; text-decoration: none;">
+					<h3>As a node module</h3>
+				</a>
+				<pre><code class="language-bash">$ npm install --save node-appletv</code></pre>
 				<p><code>node-appletv</code> makes heavy use of Promises. All functions, except for the observe functions, return Promises.</p>
-				<h3 id="examples">Examples</h3>
-				<h4 id="scan-for-apple-tvs-and-pair">Scan for Apple TVs and pair</h4>
-				<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { scan } <span class="hljs-keyword">from</span> <span class="hljs-string">'node-appletv'</span>;
+				<a href="#examples" id="examples" style="color: inherit; text-decoration: none;">
+					<h3>Examples</h3>
+				</a>
+				<a href="#scan-for-apple-tvs-and-pair" id="scan-for-apple-tvs-and-pair" style="color: inherit; text-decoration: none;">
+					<h4>Scan for Apple TVs and pair</h4>
+				</a>
+				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { scan } <span class="hljs-keyword">from</span> <span class="hljs-string">'node-appletv'</span>;
 
-<span class="hljs-keyword">return</span> scan()
-    .then(<span class="hljs-function"><span class="hljs-params">devices</span> =&gt;</span> {
-        <span class="hljs-comment">// devices is an array of AppleTV objects</span>
-        <span class="hljs-keyword">let</span> device = devices[<span class="hljs-number">0</span>];
-        <span class="hljs-keyword">return</span> device.openConnection()
-            .then(<span class="hljs-function"><span class="hljs-params">device</span> =&gt;</span> {
-                <span class="hljs-keyword">return</span> device.pair();
-            })
-            .then(<span class="hljs-function"><span class="hljs-params">callback</span> =&gt;</span> {
-                <span class="hljs-comment">// the pin is provided onscreen from the Apple TV</span>
-                <span class="hljs-keyword">return</span> callback(pin);
-            });
-    })
-    .then(<span class="hljs-function"><span class="hljs-params">device</span> =&gt;</span> {
-        <span class="hljs-comment">// you're paired!</span>
-        <span class="hljs-keyword">let</span> credentials = device.credentials.toString();
-        <span class="hljs-built_in">console</span>.log(credentials);
-    })
-    .catch(<span class="hljs-function"><span class="hljs-params">error</span> =&gt;</span> {
-        <span class="hljs-built_in">console</span>.log(error);
-    });
-</code></pre>
-				<h4 id="connect-to-a-paired-apple-tv">Connect to a paired Apple TV</h4>
-				<pre><code class="lang-typescript"><span class="hljs-keyword">import</span> { scan, parseCredentials, NowPlayingInfo } <span class="hljs-keyword">from</span> <span class="hljs-string">'node-appletv'</span>;
+<span class="hljs-keyword">let</span> devices = <span class="hljs-keyword">await</span> scan();
+<span class="hljs-comment">// devices is an array of AppleTV objects</span>
+<span class="hljs-keyword">let</span> device = devices[<span class="hljs-number">0</span>];
+<span class="hljs-keyword">await</span> device.openConnection();
+<span class="hljs-keyword">let</span> callback = <span class="hljs-keyword">await</span> device.pair();
+<span class="hljs-comment">// the pin is provided onscreen from the Apple TV</span>
+<span class="hljs-keyword">await</span> callback(pin);
+<span class="hljs-comment">// you're paired!</span>
+<span class="hljs-keyword">let</span> credentials = device.credentials.toString();
+<span class="hljs-built_in">console</span>.log(credentials);</code></pre>
+				<a href="#connect-to-a-paired-apple-tv" id="connect-to-a-paired-apple-tv" style="color: inherit; text-decoration: none;">
+					<h4>Connect to a paired Apple TV</h4>
+				</a>
+				<pre><code class="language-typescript"><span class="hljs-keyword">import</span> { scan, parseCredentials, NowPlayingInfo } <span class="hljs-keyword">from</span> <span class="hljs-string">'node-appletv'</span>;
 
 <span class="hljs-comment">// see example above for how to get the credentials string</span>
 <span class="hljs-keyword">let</span> credentials = parseCredentials(credentialsString);
 
-<span class="hljs-keyword">return</span> scan(uniqueIdentifier)
-    .then(<span class="hljs-function"><span class="hljs-params">devices</span> =&gt;</span> {
-        <span class="hljs-keyword">let</span> device = devices[<span class="hljs-number">0</span>];
-        <span class="hljs-keyword">return</span> device.openConnection(credentials);
-    })
-    .then(<span class="hljs-function"><span class="hljs-params">device</span> =&gt;</span> {
-        <span class="hljs-comment">// you're connected!</span>
-        <span class="hljs-comment">// press menu</span>
-        <span class="hljs-keyword">return</span> device.sendKeyCommand(AppleTV.Key.Menu);
-    })
-    .then(<span class="hljs-function"><span class="hljs-params">device</span> =&gt;</span> {
-        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Sent a menu command!"</span>);
+<span class="hljs-keyword">let</span> devices = <span class="hljs-keyword">await</span> scan(uniqueIdentifier)[]
+<span class="hljs-keyword">let</span> device = devices[<span class="hljs-number">0</span>];
+<span class="hljs-keyword">await</span> device.openConnection(credentials);
+<span class="hljs-comment">// you're connected!</span>
+<span class="hljs-comment">// press menu</span>
+<span class="hljs-keyword">await</span> device.sendKeyCommand(AppleTV.Key.Menu);
+<span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Sent a menu command!"</span>);
 
-        <span class="hljs-comment">// monitor now playing info</span>
-        device.on(<span class="hljs-string">'nowPlaying'</span>, <span class="hljs-function">(<span class="hljs-params">info: NowPlayingInfo</span>) =&gt;</span> {
-            <span class="hljs-built_in">console</span>.log(info.toString());
-        });
-    })
-    .catch(<span class="hljs-function"><span class="hljs-params">error</span> =&gt;</span> {
-        <span class="hljs-built_in">console</span>.log(error);
-    });
-</code></pre>
+<span class="hljs-comment">// monitor now playing info</span>
+device.on(<span class="hljs-string">'nowPlaying'</span>, <span class="hljs-function">(<span class="hljs-params">info: NowPlayingInfo</span>) =&gt;</span> {
+    <span class="hljs-built_in">console</span>.log(info.toString());
+});</code></pre>
 				<p>The <code>uniqueIdentifier</code> is advertised by each Apple TV via Bonjour. Use an app like <a href="http://www.tildesoft.com">Bonjour Browser</a> to find it. The identifier is also the first value in the string value of the <code>Credentials</code> object.</p>
-				<p>See <a href="https://github.com/edc1591/homebridge-theater-mode">homebridge-theater-mode</a> for a more practical use of this module.</p>
-				<h2 id="todo">TODO</h2>
+				<p>See <a href="https://github.com/evandcoleman/homebridge-theater-mode">homebridge-theater-mode</a> for a more practical use of this module.</p>
+				<a href="#todo" id="todo" style="color: inherit; text-decoration: none;">
+					<h2>TODO</h2>
+				</a>
 				<ul>
-					<li>[ ] Add wake command</li>
-					<li>[ ] Save credentials for paired Apple TVs</li>
+					<li><input disabled="" type="checkbox"> Add wake command</li>
+					<li><input disabled="" type="checkbox"> Save credentials for paired Apple TVs</li>
 				</ul>
-				<h2 id="development">Development</h2>
+				<a href="#development" id="development" style="color: inherit; text-decoration: none;">
+					<h2>Development</h2>
+				</a>
 				<p><code>node-appletv</code> is written in Typescript. Edit files in the <code>src</code> directory and then run <code>npm link</code> to clean, build, and create the symlinks to use the library and cli.</p>
-				<h2 id="acknowledgments">Acknowledgments</h2>
+				<a href="#acknowledgments" id="acknowledgments" style="color: inherit; text-decoration: none;">
+					<h2>Acknowledgments</h2>
+				</a>
 				<p><code>node-appletv</code> would not have been possible without the work of these people:</p>
 				<ul>
 					<li><a href="https://github.com/jeanregisser">Jean Regisser</a> who reversed the protobuf <a href="https://github.com/jeanregisser/mediaremotetv-protocol">spec of the MediaRemoteTV protocol</a></li>
@@ -163,8 +164,10 @@ $ appletv --<span class="hljs-built_in">help</span>
 					<li><a href="https://github.com/KhaosT">Khaos Tian</a> for <a href="https://github.com/KhaosT/HAP-NodeJS">reversing the HomeKit protocol</a> which also uses SRP encryption</li>
 					<li><a href="https://github.com/forty2">Zach Bean</a> for <a href="https://github.com/forty2/hap-client">implementing the HAP client spec</a></li>
 				</ul>
-				<h2 id="meta">Meta</h2>
-				<p>You can find me on Twitter <a href="https://twitter.com/edc1591">@edc1591</a></p>
+				<a href="#meta" id="meta" style="color: inherit; text-decoration: none;">
+					<h2>Meta</h2>
+				</a>
+				<p>You can find me on Twitter <a href="https://twitter.com/evandcoleman">@evandcoleman</a></p>
 				<p>Distributed under the MIT license. See <code>LICENSE</code> for more information.</p>
 			</div>
 		</div>
@@ -175,55 +178,61 @@ $ appletv --<span class="hljs-built_in">help</span>
 						<a href="globals.html"><em>Globals</em></a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_bin_index_.html">"bin/index"</a>
+						<a href="modules/_bin_index_.html">&quot;bin/index&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_bin_pair_.html">"bin/pair"</a>
+						<a href="modules/_bin_pair_.html">&quot;bin/pair&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_bin_scan_.html">"bin/scan"</a>
+						<a href="modules/_bin_scan_.html">&quot;bin/scan&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_index_.html">"index"</a>
+						<a href="modules/_index_.html">&quot;index&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_lib_appletv_.html">"lib/appletv"</a>
+						<a href="modules/_lib_appletv_.html">&quot;lib/appletv&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_lib_browser_.html">"lib/browser"</a>
+						<a href="modules/_lib_browser_.html">&quot;lib/browser&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_lib_connection_.html">"lib/connection"</a>
+						<a href="modules/_lib_connection_.html">&quot;lib/connection&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_lib_credentials_.html">"lib/credentials"</a>
+						<a href="modules/_lib_credentials_.html">&quot;lib/credentials&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_lib_message_.html">"lib/message"</a>
+						<a href="modules/_lib_message_.html">&quot;lib/message&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_lib_now_playing_info_.html">"lib/now-<wbr>playing-<wbr>info"</a>
+						<a href="modules/_lib_now_playing_info_.html">&quot;lib/now-<wbr>playing-<wbr>info&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_lib_pairing_.html">"lib/pairing"</a>
+						<a href="modules/_lib_pairing_.html">&quot;lib/pairing&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_lib_supported_command_.html">"lib/supported-<wbr>command"</a>
+						<a href="modules/_lib_supported_command_.html">&quot;lib/supported-<wbr>command&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_lib_typed_events_.html">"lib/typed-<wbr>events"</a>
+						<a href="modules/_lib_util_encryption_.html">&quot;lib/util/encryption&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_lib_util_encryption_.html">"lib/util/encryption"</a>
+						<a href="modules/_lib_util_number_.html">&quot;lib/util/number&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_lib_util_number_.html">"lib/util/number"</a>
+						<a href="modules/_lib_util_tlv_.html">&quot;lib/util/tlv&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_lib_util_tlv_.html">"lib/util/tlv"</a>
+						<a href="modules/_lib_verifier_.html">&quot;lib/verifier&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
-						<a href="modules/_lib_verifier_.html">"lib/verifier"</a>
+						<a href="modules/_test_browser_spec_.html">&quot;test/browser.spec&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_test_encryption_spec_.html">&quot;test/encryption.spec&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_test_pairing_spec_.html">&quot;test/pairing.spec&quot;</a>
 					</li>
 				</ul>
 			</nav>
@@ -246,6 +255,7 @@ $ appletv --<span class="hljs-built_in">help</span>
 				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
 				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
 				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+				<li class="tsd-kind-type-alias tsd-has-type-parameter"><span class="tsd-kind-icon">Type alias with type parameter</span></li>
 			</ul>
 			<ul class="tsd-legend">
 				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
@@ -294,7 +304,7 @@ $ appletv --<span class="hljs-built_in">help</span>
 	</div>
 </footer>
 <div class="container tsd-generator">
-	<p>Generated using <a href="http://typedoc.org/" target="_blank">TypeDoc</a></p>
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
 </div>
 <div class="overlay"></div>
 <script src="assets/js/main.js"></script>

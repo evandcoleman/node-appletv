@@ -18,7 +18,7 @@
     "test": "mocha -r ts-node/register ./src/test/**/*.spec.ts",
     "coverage": "nyc --reporter=lcov mocha -r ts-node/register ./src/test/**/*.spec.ts",
     "clean": "rimraf dist",
-    "docs": "rimraf docs && typedoc --mode modules --excludePrivate --excludeExternals --out ./docs ./src"
+    "docs": "rimraf docs && typedoc --mode modules --excludePrivate --excludeExternals --out ./docs --exclude ./src/test/**/* ./src"
   },
   "bin": {
     "appletv": "bin/appletv"
