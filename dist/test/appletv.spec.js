@@ -60,7 +60,10 @@ describe('apple tv tests', function () {
             let width = 640;
             let height = 480;
             yield this.device.openConnection();
-            yield this.device.requestArtwork(width, height);
+            try {
+                yield this.device.requestArtwork(width, height);
+            }
+            catch (error) { }
             let messages = this.sentMessages();
             chai_1.expect(messages.length).to.equal(2);
             chai_1.expect(messages[1].type).to.equal(message_1.Message.Type.PlaybackQueueRequestMessage);
