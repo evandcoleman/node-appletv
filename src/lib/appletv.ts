@@ -218,6 +218,14 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
         return this.sendKeyPressAndRelease(1, 0x82);
       case AppleTV.Key.Select:
         return this.sendKeyPressAndRelease(1, 0x89);
+      case AppleTV.Key.Wake:
+        return this.sendKeyPressAndRelease(1, 0x83);
+      case AppleTV.Key.Home:
+        return this.sendKeyPressAndRelease(12, 0x40);
+      case AppleTV.Key.VolumeUp:
+        return this.sendKeyPressAndRelease(12, 0xE9);
+      case AppleTV.Key.VolumeDown:
+        return this.sendKeyPressAndRelease(12, 0xEA);
     }
   }
 
@@ -413,7 +421,11 @@ export module AppleTV {
     Next,
     Previous,
     Suspend,
-    Select
+    Wake,
+    Select,
+    Home,
+    VolumeUp,
+    VolumeDown
   }
 
   /** Convert a string representation of a key to the correct enum type.
@@ -443,6 +455,14 @@ export module AppleTV {
       return AppleTV.Key.Suspend;
     } else if (string == "select") {
       return AppleTV.Key.Select;
+    } else if (string == "wake") {
+      return AppleTV.Key.Wake;
+    } else if (string == "home") {
+      return AppleTV.Key.Home;
+    } else if (string == "volumeup") {
+      return AppleTV.Key.VolumeUp;
+    } else if (string == "volumedown") {
+      return AppleTV.Key.VolumeDown;
     }
   }
 }

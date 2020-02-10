@@ -13,7 +13,6 @@ const appletv_1 = require("../lib/appletv");
 const message_1 = require("../lib/message");
 const chai_1 = require("chai");
 const net_1 = require("net");
-const util_1 = require("util");
 const sinon = require("sinon");
 require("mocha");
 describe('apple tv tests', function () {
@@ -87,14 +86,14 @@ describe('apple tv tests', function () {
     it('should read now playing', function () {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.device.openConnection();
-            setTimeout(function () {
-                this.device.connection.emit('message', require('./fixtures/now-playing.json'));
-            }.bind(this), 500);
-            let nowPlaying = yield util_1.promisify(this.device.on).bind(this.device)('nowPlaying');
-            console.log(nowPlaying);
+            var spy = sinon.spy();
+            this.device.on('nowPlaying', spy);
+            this.device.connection.emit('message', require('./fixtures/now-playing.json'));
             let messages = this.sentMessages();
-            chai_1.expect(messages.length).to.equal(2);
-            chai_1.expect(messages[1].type).to.equal(message_1.Message.Type.SetStateMessage);
+            chai_1.expect(messages.length).to.equal(1);
+            chai_1.expect(spy.lastCall.lastArg.title).to.equal('Seinfeld');
+            chai_1.expect(spy.lastCall.lastArg.appDisplayName).to.equal('Hulu');
+            chai_1.expect(spy.lastCall.lastArg.appBundleIdentifier).to.equal('com.hulu.plus');
         });
     });
 });
