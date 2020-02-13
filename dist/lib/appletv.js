@@ -21,7 +21,7 @@ const supported_command_1 = require("./supported-command");
 const message_1 = require("./message");
 const number_1 = require("./util/number");
 class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
-    constructor(service) {
+    constructor(service, socket) {
         super();
         this.service = service;
         this.pairingId = uuid_1.v4();
@@ -30,7 +30,7 @@ class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
         this.address = service.addresses.filter(x => x.includes('.'))[0];
         this.port = service.port;
         this.uid = service.txtRecord.UniqueIdentifier;
-        this.connection = new connection_1.Connection(this);
+        this.connection = new connection_1.Connection(this, socket);
         this.setupListeners();
     }
     /**
@@ -127,6 +127,32 @@ class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
         return this.requestPlaybackQueueWithWait(options, true);
     }
     /**
+    * Requests the current artwork from the Apple TV.
+    * @param width Image width
+    * @param height Image height
+    * @returns A Promise that resolves to a Buffer of data.
+    */
+    requestArtwork(width = 400, height = 400) {
+        var _a, _b, _c, _d, _e;
+        return __awaiter(this, void 0, void 0, function* () {
+            let response = yield this.requestPlaybackQueueWithWait({
+                artworkSize: {
+                    width: width,
+                    height: height
+                },
+                length: 1,
+                location: 0
+            }, true);
+            let data = (_e = (_d = (_c = (_b = (_a = response) === null || _a === void 0 ? void 0 : _a.payload) === null || _b === void 0 ? void 0 : _b.playbackQueue) === null || _c === void 0 ? void 0 : _c.contentItems) === null || _d === void 0 ? void 0 : _d[0]) === null || _e === void 0 ? void 0 : _e.artworkData;
+            if (data) {
+                return data;
+            }
+            else {
+                throw new Error("No artwork available");
+            }
+        });
+    }
+    /**
     * Send a key command to the AppleTV.
     * @param key The key to press.
     * @returns A promise that resolves to the AppleTV object after the message has been sent.
@@ -155,6 +181,14 @@ class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
                 return this.sendKeyPressAndRelease(1, 0x82);
             case AppleTV.Key.Select:
                 return this.sendKeyPressAndRelease(1, 0x89);
+            case AppleTV.Key.Wake:
+                return this.sendKeyPressAndRelease(1, 0x83);
+            case AppleTV.Key.Home:
+                return this.sendKeyPressAndRelease(12, 0x40);
+            case AppleTV.Key.VolumeUp:
+                return this.sendKeyPressAndRelease(12, 0xE9);
+            case AppleTV.Key.VolumeDown:
+                return this.sendKeyPressAndRelease(12, 0xEA);
         }
     }
     waitForSequence(sequence, timeout = 3) {
@@ -323,7 +357,11 @@ exports.AppleTV = AppleTV;
         Key[Key["Next"] = 7] = "Next";
         Key[Key["Previous"] = 8] = "Previous";
         Key[Key["Suspend"] = 9] = "Suspend";
-        Key[Key["Select"] = 10] = "Select";
+        Key[Key["Wake"] = 10] = "Wake";
+        Key[Key["Select"] = 11] = "Select";
+        Key[Key["Home"] = 12] = "Home";
+        Key[Key["VolumeUp"] = 13] = "VolumeUp";
+        Key[Key["VolumeDown"] = 14] = "VolumeDown";
     })(Key = AppleTV.Key || (AppleTV.Key = {}));
     /** Convert a string representation of a key to the correct enum type.
     * @param string  The string.
@@ -362,6 +400,18 @@ exports.AppleTV = AppleTV;
         }
         else if (string == "select") {
             return AppleTV.Key.Select;
+        }
+        else if (string == "wake") {
+            return AppleTV.Key.Wake;
+        }
+        else if (string == "home") {
+            return AppleTV.Key.Home;
+        }
+        else if (string == "volumeup") {
+            return AppleTV.Key.VolumeUp;
+        }
+        else if (string == "volumedown") {
+            return AppleTV.Key.VolumeDown;
         }
     }
     AppleTV.key = key;

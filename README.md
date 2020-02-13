@@ -3,7 +3,9 @@
 > A node module for interacting with an Apple TV (4th-generation or later) over the Media Remote Protocol.
 
 [![npm version](https://badge.fury.io/js/node-appletv.svg)](https://badge.fury.io/js/node-appletv)
-[![CI](https://travis-ci.org/evandcoleman/node-appletv.svg?branch=master)](https://travis-ci.org/evandcoleman/node-appletv)
+[![Maintainability](https://img.shields.io/codeclimate/maintainability/evandcoleman/node-appletv)](https://codeclimate.com/github/evandcoleman/node-appletv)
+[![Coverage](https://img.shields.io/codeclimate/coverage/evandcoleman/node-appletv)](https://codeclimate.com/github/evandcoleman/node-appletv)
+![Build](https://img.shields.io/github/workflow/status/evandcoleman/node-appletv/Tests/develop)
 [![License][license-image]][license-url]
 
 ![](images/pairing.gif)
@@ -32,11 +34,13 @@ The `appletv` cli supports several commands, such as:
 
 `pair`: Scans for Apple TVs on the local network and initiates the pairing process
 
-`command <command>`: Execute a command on an Apple TV (play, pause, menu, etc.)
+`command <command>`: Execute a command on an Apple TV (play, pause, menu, volume, wake, suspend, etc.)
 
 `state`: Logs state changes from an Apple TV (now playing info)
 
 `queue`: Requests the current playback queue from an Apple TV
+
+`artwork`: Requests the current now playing artwork from an Apple TV
 
 `messages`: Logs all raw messages from an Apple TV
 
@@ -95,11 +99,6 @@ device.on('nowPlaying', (info: NowPlayingInfo) => {
 The `uniqueIdentifier` is advertised by each Apple TV via Bonjour. Use an app like [Bonjour Browser](http://www.tildesoft.com) to find it. The identifier is also the first value in the string value of the `Credentials` object.
 
 See [homebridge-theater-mode](https://github.com/evandcoleman/homebridge-theater-mode) for a more practical use of this module.
-
-## TODO
-
-- [ ] Add wake command
-- [ ] Save credentials for paired Apple TVs
 
 ## Development
 

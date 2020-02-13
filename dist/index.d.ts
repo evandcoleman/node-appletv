@@ -1,5 +1,6 @@
 import { Credentials } from './lib/credentials';
 import { AppleTV } from './lib/appletv';
+import { Connection } from './lib/connection';
 import { Browser } from './lib/browser';
 import { NowPlayingInfo } from './lib/now-playing-info';
 import { Message } from './lib/message';
@@ -17,4 +18,4 @@ export declare function scan(uniqueIdentifier?: string, timeout?: number): Promi
 * @returns A credentials object.
 */
 export declare function parseCredentials(text: string): Credentials;
-export { AppleTV, Browser, NowPlayingInfo, Credentials, Message, SupportedCommand };
+export { AppleTV, Connection, Browser, NowPlayingInfo, Credentials, Message, SupportedCommand };

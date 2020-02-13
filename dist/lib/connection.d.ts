@@ -22,6 +22,7 @@ export declare class Connection extends EventEmitter {
     private sendProtocolMessage;
     private decodeMessage;
     waitForSequence(sequence: number, timeout?: number): Promise<Message>;
+    handleChunk(data: Buffer): Promise<Message>;
     private setupListeners;
 }
 export declare module Connection {

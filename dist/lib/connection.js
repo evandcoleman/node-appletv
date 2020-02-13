@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 const net_1 = require("net");
 const protobufjs_1 = require("protobufjs");
@@ -108,13 +117,13 @@ class Connection extends events_1.EventEmitter /* <Connection.Events> */ {
             if (credentials && credentials.writeKey) {
                 let encrypted = credentials.encrypt(data);
                 that.emit('debug', "DEBUG: >>>> Send Encrypted Data=" + encrypted.toString('hex'));
-                that.emit('debug', "DEBUG: >>>> Send Protobuf=" + JSON.stringify(message.toJSON(), null, 2));
+                that.emit('debug', "DEBUG: >>>> Send Protobuf=" + JSON.stringify(new message_1.Message(message), null, 2));
                 let messageLength = Buffer.from(varint.encode(encrypted.length));
                 let bytes = Buffer.concat([messageLength, encrypted]);
                 that.socket.write(bytes);
             }
             else {
-                that.emit('debug', "DEBUG: >>>> Send Protobuf=" + JSON.stringify(message.toJSON(), null, 2));
+                that.emit('debug', "DEBUG: >>>> Send Protobuf=" + JSON.stringify(new message_1.Message(message), null, 2));
                 let messageLength = Buffer.from(varint.encode(data.length));
                 let bytes = Buffer.concat([messageLength, data]);
                 that.socket.write(bytes);
@@ -139,7 +148,7 @@ class Connection extends events_1.EventEmitter /* <Connection.Events> */ {
                 .then(root => {
                 let ProtocolMessage = root.lookupType("ProtocolMessage");
                 let message = ProtocolMessage.decode(data);
-                that.emit('debug', "DEBUG: <<<< Received Protobuf=" + JSON.stringify(message.toJSON(), null, 2));
+                that.emit('debug', "DEBUG: <<<< Received Protobuf=" + JSON.stringify(new message_1.Message(message), null, 2));
                 return message;
             });
         });
@@ -167,31 +176,36 @@ class Connection extends events_1.EventEmitter /* <Connection.Events> */ {
             return value;
         });
     }
+    handleChunk(data) {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.buffer = Buffer.concat([this.buffer, data]);
+            let length = varint.decode(this.buffer);
+            let messageBytes = this.buffer.slice(varint.decode.bytes, length + varint.decode.bytes);
+            if (messageBytes.length < length) {
+                this.emit('debug', "Message length mismatch");
+                return null;
+            }
+            this.buffer = this.buffer.slice(length + varint.decode.bytes);
+            this.emit('debug', "DEBUG: <<<< Received Data=" + messageBytes.toString('hex'));
+            if (this.device.credentials && this.device.credentials.readKey) {
+                messageBytes = this.device.credentials.decrypt(messageBytes);
+                this.emit('debug', "DEBUG: Decrypted Data=" + messageBytes.toString('hex'));
+            }
+            let protoMessage = yield this.decodeMessage(messageBytes);
+            let message = new message_1.Message(protoMessage);
+            return message;
+        });
+    }
     setupListeners() {
         let that = this;
         this.socket.on('data', (data) => {
             try {
-                that.buffer = Buffer.concat([that.buffer, data]);
-                let length = varint.decode(that.buffer);
-                let messageBytes = that.buffer.slice(varint.decode.bytes, length + varint.decode.bytes);
-                if (messageBytes.length < length) {
-                    that.emit('debug', "Message length mismatch");
-                    return;
-                }
-                that.buffer = that.buffer.slice(length + varint.decode.bytes);
-                that.emit('debug', "DEBUG: <<<< Received Data=" + messageBytes.toString('hex'));
-                if (that.device.credentials && that.device.credentials.readKey) {
-                    messageBytes = that.device.credentials.decrypt(messageBytes);
-                    that.emit('debug', "DEBUG: Decrypted Data=" + messageBytes.toString('hex'));
-                }
-                that.decodeMessage(messageBytes)
-                    .then(protoMessage => {
-                    let message = new message_1.Message(protoMessage);
-                    that.emit('message', message);
-                    that.executeCallbacks(message.identifier, message);
-                })
-                    .catch(error => {
-                    that.emit('error', error);
+                that.handleChunk(data)
+                    .then((message) => {
+                    if (message) {
+                        that.emit('message', message);
+                        that.executeCallbacks(message.identifier, message);
+                    }
                 });
             }
             catch (error) {

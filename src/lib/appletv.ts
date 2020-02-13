@@ -52,7 +52,7 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
 
   private queuePollTimer?: any;
 
-  constructor(private service: Service) {
+  constructor(private service: Service, socket?: Socket) {
     super();
 
     this.service = service;
@@ -60,7 +60,7 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
     this.address = service.addresses.filter(x => x.includes('.'))[0];
     this.port = service.port;
     this.uid = service.txtRecord.UniqueIdentifier;
-    this.connection = new Connection(this);
+    this.connection = new Connection(this, socket);
 
     this.setupListeners();
   }
@@ -165,6 +165,31 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
   }
 
   /**
+  * Requests the current artwork from the Apple TV.
+  * @param width Image width
+  * @param height Image height
+  * @returns A Promise that resolves to a Buffer of data.
+  */
+  async requestArtwork(width: number = 400, height: number = 400): Promise<Buffer> {
+    let response = await this.requestPlaybackQueueWithWait({
+      artworkSize: {
+        width: width,
+        height: height
+      },
+      length: 1,
+      location: 0
+    }, true);
+    
+    let data = response?.payload?.playbackQueue?.contentItems?.[0]?.artworkData;
+
+    if (data) {
+      return data;
+    } else {
+      throw new Error("No artwork available");
+    }
+  }
+
+  /**
   * Send a key command to the AppleTV.
   * @param key The key to press.
   * @returns A promise that resolves to the AppleTV object after the message has been sent.
@@ -193,6 +218,14 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
         return this.sendKeyPressAndRelease(1, 0x82);
       case AppleTV.Key.Select:
         return this.sendKeyPressAndRelease(1, 0x89);
+      case AppleTV.Key.Wake:
+        return this.sendKeyPressAndRelease(1, 0x83);
+      case AppleTV.Key.Home:
+        return this.sendKeyPressAndRelease(12, 0x40);
+      case AppleTV.Key.VolumeUp:
+        return this.sendKeyPressAndRelease(12, 0xE9);
+      case AppleTV.Key.VolumeDown:
+        return this.sendKeyPressAndRelease(12, 0xEA);
     }
   }
 
@@ -388,7 +421,11 @@ export module AppleTV {
     Next,
     Previous,
     Suspend,
-    Select
+    Wake,
+    Select,
+    Home,
+    VolumeUp,
+    VolumeDown
   }
 
   /** Convert a string representation of a key to the correct enum type.
@@ -418,6 +455,14 @@ export module AppleTV {
       return AppleTV.Key.Suspend;
     } else if (string == "select") {
       return AppleTV.Key.Select;
+    } else if (string == "wake") {
+      return AppleTV.Key.Wake;
+    } else if (string == "home") {
+      return AppleTV.Key.Home;
+    } else if (string == "volumeup") {
+      return AppleTV.Key.VolumeUp;
+    } else if (string == "volumedown") {
+      return AppleTV.Key.VolumeDown;
     }
   }
 }
