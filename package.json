@@ -1,6 +1,6 @@
 {
   "name": "node-appletv",
-  "version": "1.0.11",
+  "version": "1.1.0",
   "description": "A Node.js library for communicating with an Apple TV",
   "homepage": "https://github.com/evandcoleman/node-appletv",
   "bugs": "https://github.com/evandcoleman/node-appletv/issues",
