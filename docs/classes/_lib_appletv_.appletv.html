@@ -136,6 +136,7 @@
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="_lib_appletv_.appletv.html#rawlisteners" class="tsd-kind-icon">raw<wbr>Listeners</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="_lib_appletv_.appletv.html#removealllisteners" class="tsd-kind-icon">remove<wbr>All<wbr>Listeners</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><a href="_lib_appletv_.appletv.html#removelistener" class="tsd-kind-icon">remove<wbr>Listener</a></li>
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_lib_appletv_.appletv.html#requestartwork" class="tsd-kind-icon">request<wbr>Artwork</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_lib_appletv_.appletv.html#requestplaybackqueue" class="tsd-kind-icon">request<wbr>Playback<wbr>Queue</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_lib_appletv_.appletv.html#sendkeycommand" class="tsd-kind-icon">send<wbr>Key<wbr>Command</a></li>
 								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_lib_appletv_.appletv.html#sendmessage" class="tsd-kind-icon">send<wbr>Message</a></li>
@@ -154,20 +155,23 @@
 					<a name="constructor" class="tsd-anchor"></a>
 					<h3>constructor</h3>
 					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class tsd-is-overwrite">
-						<li class="tsd-signature tsd-kind-icon">new <wbr>AppleTV<span class="tsd-signature-symbol">(</span>service<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Service</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_lib_appletv_.appletv.html" class="tsd-signature-type">AppleTV</a></li>
+						<li class="tsd-signature tsd-kind-icon">new <wbr>AppleTV<span class="tsd-signature-symbol">(</span>service<span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Service</span>, socket<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">Socket</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_lib_appletv_.appletv.html" class="tsd-signature-type">AppleTV</a></li>
 					</ul>
 					<ul class="tsd-descriptions">
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<p>Overrides EventEmitter.__constructor</p>
 								<ul>
-									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L53">src/lib/appletv.ts:53</a></li>
+									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L53">src/lib/appletv.ts:53</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
 							<ul class="tsd-parameters">
 								<li>
 									<h5>service: <span class="tsd-signature-type">Service</span></h5>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagOptional">Optional</span> socket: <span class="tsd-signature-type">Socket</span></h5>
 								</li>
 							</ul>
 							<h4 class="tsd-returns-title">Returns <a href="_lib_appletv_.appletv.html" class="tsd-signature-type">AppleTV</a></h4>
@@ -183,7 +187,7 @@
 					<div class="tsd-signature tsd-kind-icon">address<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L46">src/lib/appletv.ts:46</a></li>
+							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L46">src/lib/appletv.ts:46</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -193,7 +197,7 @@
 					<div class="tsd-signature tsd-kind-icon">connection<span class="tsd-signature-symbol">:</span> <a href="_lib_connection_.connection.html" class="tsd-signature-type">Connection</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L51">src/lib/appletv.ts:51</a></li>
+							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L51">src/lib/appletv.ts:51</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -203,7 +207,7 @@
 					<div class="tsd-signature tsd-kind-icon">credentials<span class="tsd-signature-symbol">:</span> <a href="_lib_credentials_.credentials.html" class="tsd-signature-type">Credentials</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L50">src/lib/appletv.ts:50</a></li>
+							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L50">src/lib/appletv.ts:50</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -213,7 +217,7 @@
 					<div class="tsd-signature tsd-kind-icon">name<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L45">src/lib/appletv.ts:45</a></li>
+							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L45">src/lib/appletv.ts:45</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -223,7 +227,7 @@
 					<div class="tsd-signature tsd-kind-icon">pairing<wbr>Id<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span><span class="tsd-signature-symbol"> = uuid()</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L49">src/lib/appletv.ts:49</a></li>
+							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L49">src/lib/appletv.ts:49</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -233,7 +237,7 @@
 					<div class="tsd-signature tsd-kind-icon">port<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">number</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L47">src/lib/appletv.ts:47</a></li>
+							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L47">src/lib/appletv.ts:47</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -243,7 +247,7 @@
 					<div class="tsd-signature tsd-kind-icon">uid<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">string</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L48">src/lib/appletv.ts:48</a></li>
+							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L48">src/lib/appletv.ts:48</a></li>
 						</ul>
 					</aside>
 				</section>
@@ -316,7 +320,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L114">src/lib/appletv.ts:114</a></li>
+									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L114">src/lib/appletv.ts:114</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -449,7 +453,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L140">src/lib/appletv.ts:140</a></li>
+									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L140">src/lib/appletv.ts:140</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -622,7 +626,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L82">src/lib/appletv.ts:82</a></li>
+									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L82">src/lib/appletv.ts:82</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -654,7 +658,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L72">src/lib/appletv.ts:72</a></li>
+									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L72">src/lib/appletv.ts:72</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -851,6 +855,44 @@
 					</ul>
 				</section>
 				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="requestartwork" class="tsd-anchor"></a>
+					<h3>request<wbr>Artwork</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">request<wbr>Artwork<span class="tsd-signature-symbol">(</span>width<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span>, height<span class="tsd-signature-symbol">?: </span><span class="tsd-signature-type">number</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">&gt;</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L173">src/lib/appletv.ts:173</a></li>
+								</ul>
+							</aside>
+							<div class="tsd-comment tsd-typography">
+								<div class="lead">
+									<p>Requests the current artwork from the Apple TV.</p>
+								</div>
+							</div>
+							<h4 class="tsd-parameters-title">Parameters</h4>
+							<ul class="tsd-parameters">
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> width: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 400</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Image width</p>
+									</div>
+								</li>
+								<li>
+									<h5><span class="tsd-flag ts-flagDefault value">Default value</span> height: <span class="tsd-signature-type">number</span><span class="tsd-signature-symbol"> = 400</span></h5>
+									<div class="tsd-comment tsd-typography">
+										<p>Image height</p>
+									</div>
+								</li>
+							</ul>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><span class="tsd-signature-type">Buffer</span><span class="tsd-signature-symbol">&gt;</span></h4>
+							<p>A Promise that resolves to a Buffer of data.</p>
+						</li>
+					</ul>
+				</section>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
 					<a name="requestplaybackqueue" class="tsd-anchor"></a>
 					<h3>request<wbr>Playback<wbr>Queue</h3>
 					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
@@ -860,7 +902,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L163">src/lib/appletv.ts:163</a></li>
+									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L163">src/lib/appletv.ts:163</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -892,7 +934,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L172">src/lib/appletv.ts:172</a></li>
+									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L197">src/lib/appletv.ts:197</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -924,7 +966,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L126">src/lib/appletv.ts:126</a></li>
+									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L126">src/lib/appletv.ts:126</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1003,7 +1045,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L199">src/lib/appletv.ts:199</a></li>
+									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L232">src/lib/appletv.ts:232</a></li>
 								</ul>
 							</aside>
 							<h4 class="tsd-parameters-title">Parameters</h4>
@@ -1029,7 +1071,7 @@
 						<li class="tsd-description">
 							<aside class="tsd-sources">
 								<ul>
-									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/05e8419/src/lib/appletv.ts#L398">src/lib/appletv.ts:398</a></li>
+									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L435">src/lib/appletv.ts:435</a></li>
 								</ul>
 							</aside>
 							<div class="tsd-comment tsd-typography">
@@ -1142,10 +1184,16 @@
 						<a href="../modules/_lib_verifier_.html">&quot;lib/verifier&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
+						<a href="../modules/_test_appletv_spec_.html">&quot;test/appletv.spec&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module">
 						<a href="../modules/_test_browser_spec_.html">&quot;test/browser.spec&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_test_encryption_spec_.html">&quot;test/encryption.spec&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="../modules/_test_helpers_mock_server_.html">&quot;test/helpers/mock-<wbr>server&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_test_pairing_spec_.html">&quot;test/pairing.spec&quot;</a>
@@ -1245,6 +1293,9 @@
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class tsd-is-inherited">
 								<a href="_lib_appletv_.appletv.html#removelistener" class="tsd-kind-icon">remove<wbr>Listener</a>
+							</li>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_lib_appletv_.appletv.html#requestartwork" class="tsd-kind-icon">request<wbr>Artwork</a>
 							</li>
 							<li class=" tsd-kind-method tsd-parent-kind-class">
 								<a href="_lib_appletv_.appletv.html#requestplaybackqueue" class="tsd-kind-icon">request<wbr>Playback<wbr>Queue</a>

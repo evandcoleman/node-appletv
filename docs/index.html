@@ -69,7 +69,9 @@
 					<p>A node module for interacting with an Apple TV (4th-generation or later) over the Media Remote Protocol.</p>
 				</blockquote>
 				<p><a href="https://badge.fury.io/js/node-appletv"><img src="https://badge.fury.io/js/node-appletv.svg" alt="npm version"></a>
-					<a href="https://travis-ci.org/evandcoleman/node-appletv"><img src="https://travis-ci.org/evandcoleman/node-appletv.svg?branch=master" alt="CI"></a>
+					<a href="https://codeclimate.com/github/evandcoleman/node-appletv"><img src="https://img.shields.io/codeclimate/maintainability/evandcoleman/node-appletv" alt="Maintainability"></a>
+					<a href="https://codeclimate.com/github/evandcoleman/node-appletv"><img src="https://img.shields.io/codeclimate/coverage/evandcoleman/node-appletv" alt="Coverage"></a>
+					<img src="https://img.shields.io/github/workflow/status/evandcoleman/node-appletv/Tests/develop" alt="Build">
 				<a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a></p>
 				<p><img src="images/pairing.gif" alt=""></p>
 				<a href="#overview" id="overview" style="color: inherit; text-decoration: none;">
@@ -93,9 +95,10 @@ $ npm install -g node-appletv
 $ appletv --<span class="hljs-built_in">help</span></code></pre>
 				<p>The <code>appletv</code> cli supports several commands, such as:</p>
 				<p><code>pair</code>: Scans for Apple TVs on the local network and initiates the pairing process</p>
-				<p><code>command &lt;command&gt;</code>: Execute a command on an Apple TV (play, pause, menu, etc.)</p>
+				<p><code>command &lt;command&gt;</code>: Execute a command on an Apple TV (play, pause, menu, volume, wake, suspend, etc.)</p>
 				<p><code>state</code>: Logs state changes from an Apple TV (now playing info)</p>
 				<p><code>queue</code>: Requests the current playback queue from an Apple TV</p>
+				<p><code>artwork</code>: Requests the current now playing artwork from an Apple TV</p>
 				<p><code>messages</code>: Logs all raw messages from an Apple TV</p>
 				<p><code>help &lt;command&gt;</code>: Get help for a specific command</p>
 				<a href="#as-a-node-module" id="as-a-node-module" style="color: inherit; text-decoration: none;">
@@ -143,13 +146,6 @@ device.on(<span class="hljs-string">'nowPlaying'</span>, <span class="hljs-funct
 });</code></pre>
 				<p>The <code>uniqueIdentifier</code> is advertised by each Apple TV via Bonjour. Use an app like <a href="http://www.tildesoft.com">Bonjour Browser</a> to find it. The identifier is also the first value in the string value of the <code>Credentials</code> object.</p>
 				<p>See <a href="https://github.com/evandcoleman/homebridge-theater-mode">homebridge-theater-mode</a> for a more practical use of this module.</p>
-				<a href="#todo" id="todo" style="color: inherit; text-decoration: none;">
-					<h2>TODO</h2>
-				</a>
-				<ul>
-					<li><input disabled="" type="checkbox"> Add wake command</li>
-					<li><input disabled="" type="checkbox"> Save credentials for paired Apple TVs</li>
-				</ul>
 				<a href="#development" id="development" style="color: inherit; text-decoration: none;">
 					<h2>Development</h2>
 				</a>
@@ -226,10 +222,16 @@ device.on(<span class="hljs-string">'nowPlaying'</span>, <span class="hljs-funct
 						<a href="modules/_lib_verifier_.html">&quot;lib/verifier&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
+						<a href="modules/_test_appletv_spec_.html">&quot;test/appletv.spec&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module">
 						<a href="modules/_test_browser_spec_.html">&quot;test/browser.spec&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="modules/_test_encryption_spec_.html">&quot;test/encryption.spec&quot;</a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_test_helpers_mock_server_.html">&quot;test/helpers/mock-<wbr>server&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
 						<a href="modules/_test_pairing_spec_.html">&quot;test/pairing.spec&quot;</a>
