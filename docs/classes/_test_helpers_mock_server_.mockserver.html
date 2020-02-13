@@ -3,7 +3,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<title>ClientUpdatesConfig | node-appletv</title>
+	<title>MockServer | node-appletv</title>
 	<meta name="description" content="">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="stylesheet" href="../assets/css/main.css">
@@ -54,13 +54,13 @@
 					<a href="../globals.html">Globals</a>
 				</li>
 				<li>
-					<a href="../modules/_lib_appletv_.html">&quot;lib/appletv&quot;</a>
+					<a href="../modules/_test_helpers_mock_server_.html">&quot;test/helpers/mock-server&quot;</a>
 				</li>
 				<li>
-					<a href="_lib_appletv_.clientupdatesconfig.html">ClientUpdatesConfig</a>
+					<a href="_test_helpers_mock_server_.mockserver.html">MockServer</a>
 				</li>
 			</ul>
-			<h1>Interface ClientUpdatesConfig</h1>
+			<h1>Class MockServer</h1>
 		</div>
 	</div>
 </header>
@@ -71,7 +71,7 @@
 				<h3>Hierarchy</h3>
 				<ul class="tsd-hierarchy">
 					<li>
-						<span class="target">ClientUpdatesConfig</span>
+						<span class="target">MockServer</span>
 					</li>
 				</ul>
 			</section>
@@ -80,58 +80,88 @@
 				<section class="tsd-panel tsd-index-panel">
 					<div class="tsd-index-content">
 						<section class="tsd-index-section ">
+							<h3>Constructors</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-constructor tsd-parent-kind-class"><a href="_test_helpers_mock_server_.mockserver.html#constructor" class="tsd-kind-icon">constructor</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
 							<h3>Properties</h3>
 							<ul class="tsd-index-list">
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_lib_appletv_.clientupdatesconfig.html#artworkupdates" class="tsd-kind-icon">artwork<wbr>Updates</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_lib_appletv_.clientupdatesconfig.html#keyboardupdates" class="tsd-kind-icon">keyboard<wbr>Updates</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_lib_appletv_.clientupdatesconfig.html#nowplayingupdates" class="tsd-kind-icon">now<wbr>Playing<wbr>Updates</a></li>
-								<li class="tsd-kind-property tsd-parent-kind-interface"><a href="_lib_appletv_.clientupdatesconfig.html#volumeupdates" class="tsd-kind-icon">volume<wbr>Updates</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_test_helpers_mock_server_.mockserver.html#device" class="tsd-kind-icon">device</a></li>
+								<li class="tsd-kind-property tsd-parent-kind-class"><a href="_test_helpers_mock_server_.mockserver.html#message" class="tsd-kind-icon">message</a></li>
+							</ul>
+						</section>
+						<section class="tsd-index-section ">
+							<h3>Methods</h3>
+							<ul class="tsd-index-list">
+								<li class="tsd-kind-method tsd-parent-kind-class"><a href="_test_helpers_mock_server_.mockserver.html#close" class="tsd-kind-icon">close</a></li>
 							</ul>
 						</section>
 					</div>
 				</section>
 			</section>
 			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Constructors</h2>
+				<section class="tsd-panel tsd-member tsd-kind-constructor tsd-parent-kind-class">
+					<a name="constructor" class="tsd-anchor"></a>
+					<h3>constructor</h3>
+					<ul class="tsd-signatures tsd-kind-constructor tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">new <wbr>Mock<wbr>Server<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><a href="_test_helpers_mock_server_.mockserver.html" class="tsd-signature-type">MockServer</a></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/test/helpers/mock-server.ts#L11">src/test/helpers/mock-server.ts:11</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <a href="_test_helpers_mock_server_.mockserver.html" class="tsd-signature-type">MockServer</a></h4>
+						</li>
+					</ul>
+				</section>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
 				<h2>Properties</h2>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="artworkupdates" class="tsd-anchor"></a>
-					<h3>artwork<wbr>Updates</h3>
-					<div class="tsd-signature tsd-kind-icon">artwork<wbr>Updates<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="device" class="tsd-anchor"></a>
+					<h3>device</h3>
+					<div class="tsd-signature tsd-kind-icon">device<span class="tsd-signature-symbol">:</span> <a href="_lib_appletv_.appletv.html" class="tsd-signature-type">AppleTV</a></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L38">src/lib/appletv.ts:38</a></li>
+							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/test/helpers/mock-server.ts#L8">src/test/helpers/mock-server.ts:8</a></li>
 						</ul>
 					</aside>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="keyboardupdates" class="tsd-anchor"></a>
-					<h3>keyboard<wbr>Updates</h3>
-					<div class="tsd-signature tsd-kind-icon">keyboard<wbr>Updates<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
+				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-class">
+					<a name="message" class="tsd-anchor"></a>
+					<h3>message</h3>
+					<div class="tsd-signature tsd-kind-icon">message<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">Promise</span><span class="tsd-signature-symbol">&lt;</span><a href="_lib_message_.message.html" class="tsd-signature-type">Message</a><span class="tsd-signature-symbol">&gt;</span></div>
 					<aside class="tsd-sources">
 						<ul>
-							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L41">src/lib/appletv.ts:41</a></li>
+							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/test/helpers/mock-server.ts#L9">src/test/helpers/mock-server.ts:9</a></li>
 						</ul>
 					</aside>
 				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="nowplayingupdates" class="tsd-anchor"></a>
-					<h3>now<wbr>Playing<wbr>Updates</h3>
-					<div class="tsd-signature tsd-kind-icon">now<wbr>Playing<wbr>Updates<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L39">src/lib/appletv.ts:39</a></li>
-						</ul>
-					</aside>
-				</section>
-				<section class="tsd-panel tsd-member tsd-kind-property tsd-parent-kind-interface">
-					<a name="volumeupdates" class="tsd-anchor"></a>
-					<h3>volume<wbr>Updates</h3>
-					<div class="tsd-signature tsd-kind-icon">volume<wbr>Updates<span class="tsd-signature-symbol">:</span> <span class="tsd-signature-type">boolean</span></div>
-					<aside class="tsd-sources">
-						<ul>
-							<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/lib/appletv.ts#L40">src/lib/appletv.ts:40</a></li>
-						</ul>
-					</aside>
+			</section>
+			<section class="tsd-panel-group tsd-member-group ">
+				<h2>Methods</h2>
+				<section class="tsd-panel tsd-member tsd-kind-method tsd-parent-kind-class">
+					<a name="close" class="tsd-anchor"></a>
+					<h3>close</h3>
+					<ul class="tsd-signatures tsd-kind-method tsd-parent-kind-class">
+						<li class="tsd-signature tsd-kind-icon">close<span class="tsd-signature-symbol">(</span><span class="tsd-signature-symbol">)</span><span class="tsd-signature-symbol">: </span><span class="tsd-signature-type">void</span></li>
+					</ul>
+					<ul class="tsd-descriptions">
+						<li class="tsd-description">
+							<aside class="tsd-sources">
+								<ul>
+									<li>Defined in <a href="https://github.com/evandcoleman/node-appletv/blob/d6fc727/src/test/helpers/mock-server.ts#L39">src/test/helpers/mock-server.ts:39</a></li>
+								</ul>
+							</aside>
+							<h4 class="tsd-returns-title">Returns <span class="tsd-signature-type">void</span></h4>
+						</li>
+					</ul>
 				</section>
 			</section>
 		</div>
@@ -153,7 +183,7 @@
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_index_.html">&quot;index&quot;</a>
 					</li>
-					<li class="current tsd-kind-external-module">
+					<li class=" tsd-kind-external-module">
 						<a href="../modules/_lib_appletv_.html">&quot;lib/appletv&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
@@ -198,7 +228,7 @@
 					<li class=" tsd-kind-external-module">
 						<a href="../modules/_test_encryption_spec_.html">&quot;test/encryption.spec&quot;</a>
 					</li>
-					<li class=" tsd-kind-external-module">
+					<li class="current tsd-kind-external-module">
 						<a href="../modules/_test_helpers_mock_server_.html">&quot;test/helpers/mock-<wbr>server&quot;</a>
 					</li>
 					<li class=" tsd-kind-external-module">
@@ -208,39 +238,27 @@
 			</nav>
 			<nav class="tsd-navigation secondary menu-sticky">
 				<ul class="before-current">
-					<li class=" tsd-kind-class tsd-parent-kind-external-module">
-						<a href="../classes/_lib_appletv_.appletv.html" class="tsd-kind-icon">AppleTV</a>
-					</li>
 				</ul>
 				<ul class="current">
-					<li class="current tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="_lib_appletv_.clientupdatesconfig.html" class="tsd-kind-icon">Client<wbr>Updates<wbr>Config</a>
+					<li class="current tsd-kind-class tsd-parent-kind-external-module">
+						<a href="_test_helpers_mock_server_.mockserver.html" class="tsd-kind-icon">Mock<wbr>Server</a>
 						<ul>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_lib_appletv_.clientupdatesconfig.html#artworkupdates" class="tsd-kind-icon">artwork<wbr>Updates</a>
+							<li class=" tsd-kind-constructor tsd-parent-kind-class">
+								<a href="_test_helpers_mock_server_.mockserver.html#constructor" class="tsd-kind-icon">constructor</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_lib_appletv_.clientupdatesconfig.html#keyboardupdates" class="tsd-kind-icon">keyboard<wbr>Updates</a>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="_test_helpers_mock_server_.mockserver.html#device" class="tsd-kind-icon">device</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_lib_appletv_.clientupdatesconfig.html#nowplayingupdates" class="tsd-kind-icon">now<wbr>Playing<wbr>Updates</a>
+							<li class=" tsd-kind-property tsd-parent-kind-class">
+								<a href="_test_helpers_mock_server_.mockserver.html#message" class="tsd-kind-icon">message</a>
 							</li>
-							<li class=" tsd-kind-property tsd-parent-kind-interface">
-								<a href="_lib_appletv_.clientupdatesconfig.html#volumeupdates" class="tsd-kind-icon">volume<wbr>Updates</a>
+							<li class=" tsd-kind-method tsd-parent-kind-class">
+								<a href="_test_helpers_mock_server_.mockserver.html#close" class="tsd-kind-icon">close</a>
 							</li>
 						</ul>
 					</li>
 				</ul>
 				<ul class="after-current">
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="_lib_appletv_.playbackqueuerequestoptions.html" class="tsd-kind-icon">Playback<wbr>Queue<wbr>Request<wbr>Options</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module">
-						<a href="_lib_appletv_.size.html" class="tsd-kind-icon">Size</a>
-					</li>
-					<li class=" tsd-kind-interface tsd-parent-kind-external-module tsd-is-not-exported">
-						<a href="_lib_appletv_.staterequestcallback.html" class="tsd-kind-icon">State<wbr>Request<wbr>Callback</a>
-					</li>
 				</ul>
 			</nav>
 		</div>
