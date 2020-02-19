@@ -8,7 +8,6 @@ export declare class TVClient extends AppleTV {
     private service;
     address: string;
     socket: Socket;
-    private queuePollTimer?;
     constructor(service: Service, socket?: Socket);
     /**
     * Pair with an already discovered AppleTV.
@@ -43,7 +42,5 @@ export declare class TVClient extends AppleTV {
     private sendClientUpdatesConfig;
     private sendWakeDevice;
     private onReceiveMessage;
-    private onNewListener;
-    private onRemoveListener;
     private setupListeners;
 }

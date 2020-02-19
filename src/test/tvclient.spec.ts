@@ -7,13 +7,13 @@ import * as mdns from 'mdns';
 import * as sinon from 'sinon';
 import 'mocha';
 
-describe('apple tv tests', function() {
+describe('client tests', function() {
   beforeEach(function() {
     let socket = new Socket({});
 
     sinon.stub(socket, 'write');
     sinon.stub(<any>socket, 'connect').callsFake(function(port: number, host: string, callback: any) {
-        callback();
+      callback();
     });
 
     this.device = new TVClient({
@@ -32,8 +32,7 @@ describe('apple tv tests', function() {
       }
     }, socket);
 
-    this.fake = sinon.stub(this.device.connection, 'sendProtocolMessage');
-    this.device.connection.isOpen = true;
+    this.fake = sinon.stub(this.device, 'sendProtocolMessage');
 
     this.sentMessages = function() {
       var messages = [];
@@ -89,7 +88,7 @@ describe('apple tv tests', function() {
 
     var spy = sinon.spy();
     this.device.on('nowPlaying', spy);
-    this.device.connection.emit('message', <Message>require('./fixtures/now-playing.json'));
+    this.device.emit('message', <Message>require('./fixtures/now-playing.json'));
     
     let messages = this.sentMessages();
     

@@ -42,7 +42,11 @@ class TVClient extends appletv_1.AppleTV {
         });
         return __awaiter(this, void 0, void 0, function* () {
             yield _super.open.call(this, credentials);
-            yield util_1.promisify(this.socket.connect)(this.port, this.address);
+            let open = util_1.promisify(this.socket.connect);
+            yield open({
+                port: this.port,
+                host: this.address
+            });
             yield this.sendIntroduction();
             if (credentials) {
                 let verifier = new verifier_1.Verifier(this);
@@ -218,42 +222,10 @@ class TVClient extends appletv_1.AppleTV {
             }
         }
     }
-    onNewListener(event, listener) {
-        let that = this;
-        if (this.queuePollTimer == null && (event == 'nowPlaying' || event == 'supportedCommands')) {
-            this.queuePollTimer = setInterval(() => {
-                if (that.connection.isOpen) {
-                    that.requestPlaybackQueueWithWait({
-                        length: 100,
-                        location: 0,
-                        artworkSize: {
-                            width: -1,
-                            height: 368
-                        }
-                    }, false).then(() => { }).catch(error => { });
-                }
-            }, 5000);
-        }
-    }
-    onRemoveListener(event, listener) {
-        if (this.queuePollTimer != null && (event == 'nowPlaying' || event == 'supportedCommands')) {
-            let listenerCount = this.listenerCount('nowPlaying') + this.listenerCount('supportedCommands');
-            if (listenerCount == 0) {
-                clearInterval(this.queuePollTimer);
-                this.queuePollTimer = null;
-            }
-        }
-    }
     setupListeners() {
         let that = this;
         this.on('message', (message) => {
             that.onReceiveMessage(message);
-        });
-        this.on('newListener', (event, listener) => {
-            that.onNewListener(event, listener);
-        });
-        this.on('removeListener', (event, listener) => {
-            that.onRemoveListener(event, listener);
         });
     }
 }

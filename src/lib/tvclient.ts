@@ -40,7 +40,8 @@ export class TVClient extends AppleTV {
   async open(credentials?: Credentials): Promise<this> {
     await super.open(credentials);
 
-    await promisify(this.socket.connect)(this.port, this.address);
+    let open: any = promisify(this.socket.connect);
+    await open(this.port, this.address);
     await this.sendIntroduction();
 
     if (credentials) {

@@ -1,0 +1,16 @@
+syntax = "proto2";
+
+message AudioPacket {
+  required int32 startOffset = 1;
+  required int32 variableFramesInPacket = 2;
+  required int32 dataByteSize = 3;
+}
+
+message AudioBuffer {
+  required AudioFormatSettings formatSettings = 1;
+  optional int32 packetCount = 2;
+  optional int32 maximumPacketSize = 3;
+  optional int32 packetCapacity = 4;
+  required bytes contents = 5;
+  repeated AudioPacket packetDescriptions = 6;
+}
