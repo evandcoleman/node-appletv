@@ -43,6 +43,7 @@ export declare class AppleTV extends EventEmitter {
     * Closes the connection to the Apple TV.
     */
     close(): void;
+    write(data: Buffer): void;
     /**
     * Send a Protobuf message to the AppleTV. This is for advanced usage only.
     * @param definitionFilename  The Protobuf filename of the message type.
@@ -67,7 +68,6 @@ export declare class AppleTV extends EventEmitter {
     * @returns A promise that resolves to the Message (if there is one).
     */
     handleChunk(data: Buffer): Promise<Message>;
-    write(data: Buffer): void;
     private addCallback;
     private executeCallbacks;
     private sendProtocolMessage;

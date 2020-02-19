@@ -23,7 +23,7 @@ export class TVClient extends AppleTV {
     super(service.txtRecord.Name, service.port, service.txtRecord.UniqueIdentifier);
 
     this.address = service.addresses.filter(x => x.includes('.'))[0];
-    this.socket = socket;
+    this.socket = socket || new Socket();
 
     this.setupListeners();
   }
@@ -40,8 +40,7 @@ export class TVClient extends AppleTV {
   async open(credentials?: Credentials): Promise<this> {
     await super.open(credentials);
 
-    let open: any = promisify(this.socket.connect);
-    await open(this.port, this.address);
+    await this.openSocket();
     await this.sendIntroduction();
 
     if (credentials) {
@@ -65,8 +64,29 @@ export class TVClient extends AppleTV {
     return this;
   }
 
+  private openSocket(): Promise<any> {
+    let that = this;
+    return new Promise<void>((resolve, reject) => {
+      that.socket.connect(this.port, this.address, function() {
+        that.socket.on('data', async (data) => {
+          try {
+            await that.handleChunk(data);
+          } catch(error) {
+            that.emit('error', error);
+          }
+        });
+
+        resolve();
+      });
+    });
+  }
+
   close() {
     this.socket.end();
+  }
+
+  write(data: Buffer) {
+    this.socket.write(data);
   }
 
   /**

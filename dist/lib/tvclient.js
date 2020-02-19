@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const path = require("path");
 const protobufjs_1 = require("protobufjs");
 const uuid_1 = require("uuid");
-const util_1 = require("util");
+const net_1 = require("net");
 const appletv_1 = require("./appletv");
 const pairing_1 = require("./pairing");
 const verifier_1 = require("./verifier");
@@ -25,7 +25,7 @@ class TVClient extends appletv_1.AppleTV {
         super(service.txtRecord.Name, service.port, service.txtRecord.UniqueIdentifier);
         this.service = service;
         this.address = service.addresses.filter(x => x.includes('.'))[0];
-        this.socket = socket;
+        this.socket = socket || new net_1.Socket();
         this.setupListeners();
     }
     /**
@@ -42,11 +42,7 @@ class TVClient extends appletv_1.AppleTV {
         });
         return __awaiter(this, void 0, void 0, function* () {
             yield _super.open.call(this, credentials);
-            let open = util_1.promisify(this.socket.connect);
-            yield open({
-                port: this.port,
-                host: this.address
-            });
+            yield this.openSocket();
             yield this.sendIntroduction();
             if (credentials) {
                 let verifier = new verifier_1.Verifier(this);
@@ -67,8 +63,27 @@ class TVClient extends appletv_1.AppleTV {
             return this;
         });
     }
+    openSocket() {
+        let that = this;
+        return new Promise((resolve, reject) => {
+            that.socket.connect(this.port, this.address, function () {
+                that.socket.on('data', (data) => __awaiter(this, void 0, void 0, function* () {
+                    try {
+                        yield that.handleChunk(data);
+                    }
+                    catch (error) {
+                        that.emit('error', error);
+                    }
+                }));
+                resolve();
+            });
+        });
+    }
     close() {
         this.socket.end();
+    }
+    write(data) {
+        this.socket.write(data);
     }
     /**
     * Requests the current playback queue from the Apple TV.

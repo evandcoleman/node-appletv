@@ -16,7 +16,7 @@ const chai_1 = require("chai");
 const net_1 = require("net");
 const sinon = require("sinon");
 require("mocha");
-describe('apple tv tests', function () {
+describe('client tests', function () {
     beforeEach(function () {
         let socket = new net_1.Socket({});
         sinon.stub(socket, 'write');
@@ -38,8 +38,7 @@ describe('apple tv tests', function () {
                 UniqueIdentifier: "MockAppleTVUUID"
             }
         }, socket);
-        this.fake = sinon.stub(this.device.connection, 'sendProtocolMessage');
-        this.device.connection.isOpen = true;
+        this.fake = sinon.stub(this.device, 'sendProtocolMessage');
         this.sentMessages = function () {
             var messages = [];
             for (var i = 0; i < this.fake.callCount; i++) {
@@ -89,7 +88,7 @@ describe('apple tv tests', function () {
             yield this.device.open();
             var spy = sinon.spy();
             this.device.on('nowPlaying', spy);
-            this.device.connection.emit('message', require('./fixtures/now-playing.json'));
+            this.device.emit('message', require('./fixtures/now-playing.json'));
             let messages = this.sentMessages();
             chai_1.expect(messages.length).to.equal(1);
             chai_1.expect(spy.lastCall.lastArg.title).to.equal('Seinfeld');

@@ -15,7 +15,9 @@ export declare class TVClient extends AppleTV {
     */
     pair(): Promise<(pin: string) => Promise<AppleTV>>;
     open(credentials?: Credentials): Promise<this>;
+    private openSocket;
     close(): void;
+    write(data: Buffer): void;
     /**
     * Requests the current playback queue from the Apple TV.
     * @param options Options to send

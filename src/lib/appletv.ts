@@ -85,7 +85,9 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
     throw new Error("Subclasses should override this");
   }
 
-  // async 
+  write(data: Buffer) {
+    throw new Error("Subclasses must override this")
+  }
 
   /**
   * Send a Protobuf message to the AppleTV. This is for advanced usage only.
@@ -203,10 +205,6 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
     }
     
     return message;
-  }
-
-  write(data: Buffer) {
-    throw new Error("Subclasses must override this")
   }
 
   private addCallback(identifier: string, callback: (message: Message) => void) {
