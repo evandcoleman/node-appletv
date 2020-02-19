@@ -19,8 +19,6 @@ export class TVClient extends AppleTV {
   public address: string;
   public socket: Socket;
 
-  private queuePollTimer?: any;
-
   constructor(private service: Service, socket?: Socket) {
     super(service.txtRecord.Name, service.port, service.txtRecord.UniqueIdentifier);
 
@@ -232,45 +230,11 @@ export class TVClient extends AppleTV {
     }
   }
 
-  private onNewListener(event: string, listener: any) {
-    let that = this;
-    if (this.queuePollTimer == null && (event == 'nowPlaying' || event == 'supportedCommands')) {
-      this.queuePollTimer = setInterval(() => {
-        if (that.connection.isOpen) {
-          that.requestPlaybackQueueWithWait({
-            length: 100,
-            location: 0,
-            artworkSize: {
-              width: -1,
-              height: 368
-            }
-          }, false).then(() => {}).catch(error => {});
-        }
-      }, 5000);
-    }
-  }
-
-  private onRemoveListener(event: string, listener: any) {
-    if (this.queuePollTimer != null && (event == 'nowPlaying' || event == 'supportedCommands')) {
-      let listenerCount = this.listenerCount('nowPlaying') + this.listenerCount('supportedCommands');
-      if (listenerCount == 0) {
-        clearInterval(this.queuePollTimer);
-        this.queuePollTimer = null;
-      }
-    }
-  }
-
   private setupListeners() {
     let that = this;
 
     this.on('message', (message: Message) => {
       that.onReceiveMessage(message);
-    });
-    this.on('newListener', (event, listener) => {
-      that.onNewListener(event, listener);
-    });
-    this.on('removeListener', (event, listener) => {
-      that.onRemoveListener(event, listener);
     });
   }
 }
