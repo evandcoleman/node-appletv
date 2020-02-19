@@ -46,7 +46,7 @@ describe('apple tv discovery', function() {
 //     let server = new MockServer();
 //     let device = await server.device;
 
-//     await device.openConnection();
+//     await device.open();
 
 //     let callback = await device.pair();
 

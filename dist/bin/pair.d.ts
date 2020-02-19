@@ -1,2 +1,2 @@
-import { AppleTV } from '../lib/appletv';
-export declare function pair(device: AppleTV, logger: Logger): Promise<AppleTV>;
+import { TVClient } from '../lib/tvclient';
+export declare function pair(device: TVClient, logger: Logger): Promise<TVClient>;

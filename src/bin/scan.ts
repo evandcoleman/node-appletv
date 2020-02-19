@@ -2,10 +2,10 @@ import { prompt } from 'inquirer';
 import * as caporal from 'caporal';
 import * as ora from 'ora';
 
-import { AppleTV } from '../lib/appletv';
+import { TVClient } from '../lib/tvclient';
 import { Browser } from '../lib/browser';
 
-export function scan(logger: Logger, timeout?: number, uniqueIdentifier?: string): Promise<AppleTV> {
+export function scan(logger: Logger, timeout?: number, uniqueIdentifier?: string): Promise<TVClient> {
   let browser = new Browser();
   let spinner = ora('Scanning for Apple TVs...').start();
   return browser

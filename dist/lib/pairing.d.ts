@@ -1,6 +1,6 @@
-import { AppleTV } from './appletv';
+import { TVClient } from './tvclient';
 export declare class Pairing {
-    device: AppleTV;
+    device: TVClient;
     private srp;
     private key;
     private publicKey;
@@ -8,12 +8,12 @@ export declare class Pairing {
     private deviceSalt;
     private devicePublicKey;
     private deviceProof;
-    constructor(device: AppleTV);
+    constructor(device: TVClient);
     /**
     * Initiates the pairing process
     * @returns A promise that resolves to a callback which takes in the pairing pin from the Apple TV.
     */
-    initiatePair(): Promise<(pin: string) => Promise<AppleTV>>;
+    initiatePair(): Promise<(pin: string) => Promise<TVClient>>;
     private completePairing;
     private sendThirdSequence;
     private sendFifthSequence;

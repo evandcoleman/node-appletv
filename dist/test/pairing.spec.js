@@ -13,7 +13,7 @@
 //     this.server.close();
 //   });
 //   it('should send introduction', async function() {
-//     this.device.openConnection();
+//     this.device.open();
 //     let message = await this.server.message;
 //     expect(message.type).to.equal(Message.Type.DeviceInfoMessage);
 //   });

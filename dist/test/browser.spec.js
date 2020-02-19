@@ -45,7 +45,7 @@ describe('apple tv discovery', function () {
 //     this.timeout(10000);
 //     let server = new MockServer();
 //     let device = await server.device;
-//     await device.openConnection();
+//     await device.open();
 //     let callback = await device.pair();
 //   });
 // });

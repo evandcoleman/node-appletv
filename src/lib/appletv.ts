@@ -1,11 +1,12 @@
-import { Service } from 'mdns';
 import * as path from 'path';
-import { load, Message as ProtoMessage } from 'protobufjs'
+import * as varint from 'varint';
+import { load, Type, Message as ProtoMessage, Enum } from 'protobufjs'
 import { v4 as uuid } from 'uuid';
 import { EventEmitter } from 'events';
 import { Socket } from 'net';
+import snake = require('snake-case');
+import camelcase = require('camelcase');
 
-import { Connection } from './connection';
 import { Pairing } from './pairing'; 
 import { Verifier } from './verifier';
 import { Credentials } from './credentials';
@@ -13,6 +14,13 @@ import { NowPlayingInfo } from './now-playing-info';
 import { SupportedCommand } from './supported-command';
 import { Message } from './message';
 import number from './util/number';
+import tlv from './util/tlv';
+import encryption from './util/encryption';
+
+interface MessageCallback {
+  responseType: string
+  callback: (message: Message) => void
+}
 
 interface StateRequestCallback {
   id: string;
@@ -42,36 +50,15 @@ export interface ClientUpdatesConfig {
 }
 
 export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
-  public name: string;
-  public address: string;
-  public port: number;
-  public uid: string;
   public pairingId: string = uuid();
   public credentials: Credentials;
-  public connection: Connection;
 
-  private queuePollTimer?: any;
+  private callbacks = new Map<String, [MessageCallback]>();
+  private ProtocolMessage: Type;
+  private buffer: Buffer = Buffer.alloc(0);
 
-  constructor(private service: Service, socket?: Socket) {
+  constructor(public name: string, public port: number, public uid: string) {
     super();
-
-    this.service = service;
-    this.name = service.txtRecord.Name;
-    this.address = service.addresses.filter(x => x.includes('.'))[0];
-    this.port = service.port;
-    this.uid = service.txtRecord.UniqueIdentifier;
-    this.connection = new Connection(this, socket);
-
-    this.setupListeners();
-  }
-
-  /**
-  * Pair with an already discovered AppleTV.
-  * @returns A promise that resolves to the AppleTV object.
-  */
-  pair(): Promise<(pin: string) => Promise<AppleTV>> {
-    let pairing = new Pairing(this);
-    return pairing.initiatePair();
   }
 
   /**
@@ -79,31 +66,14 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
   * @param credentials  The credentials object for this AppleTV
   * @returns A promise that resolves to the AppleTV object.
   */
-  async openConnection(credentials?: Credentials): Promise<AppleTV> {
+  async open(credentials?: Credentials): Promise<this> {
     if (credentials) {
       this.pairingId = credentials.pairingId;      
     }
-    
-    await this.connection.open();
-    await this.sendIntroduction();
-    this.credentials = credentials;
-    if (credentials) {
-      let verifier = new Verifier(this);
-      let keys = await verifier.verify();
-      this.credentials.readKey = keys['readKey'];
-      this.credentials.writeKey = keys['writeKey'];
-      this.emit('debug', "DEBUG: Keys Read=" + this.credentials.readKey.toString('hex') + ", Write=" + this.credentials.writeKey.toString('hex'));
-      await this.sendConnectionState();
-    }
 
-    if (credentials) {
-      await this.sendClientUpdatesConfig({
-        nowPlayingUpdates: true,
-        artworkUpdates: true,
-        keyboardUpdates: false,
-        volumeUpdates: false
-      });
-    }
+    this.credentials = credentials;
+    let root = await load(path.resolve(__dirname + "/protos/ProtocolMessage.proto"));
+    this.ProtocolMessage = root.lookupType("ProtocolMessage");
 
     return this;
   }
@@ -111,9 +81,11 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
   /**
   * Closes the connection to the Apple TV.
   */
-  closeConnection() {
-    this.connection.close();
+  close() {
+    throw new Error("Subclasses should override this");
   }
+
+  // async 
 
   /**
   * Send a Protobuf message to the AppleTV. This is for advanced usage only.
@@ -128,7 +100,25 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
     let type = root.lookupType(messageType);
     let message = await type.create(body);
 
-    return this.connection.send(message, waitForResponse, priority, this.credentials);
+    return this.send(message, waitForResponse, priority, this.credentials);
+  }
+
+  send(message: ProtoMessage<{}>, waitForResponse: boolean, priority: number, credentials?: Credentials): Promise<Message> {
+    let ProtocolMessage = message.$type.parent['ProtocolMessage'];
+    let types = ProtocolMessage.lookupEnum("Type");
+    let name = message.$type.name;
+    let typeName = snake(name).toUpperCase();
+    let innerType = types.values[typeName];
+    var outerMessage = ProtocolMessage.create({
+      priority: priority,
+      type: innerType
+    });
+    if (Object.keys(message.toJSON()).length > 0) {
+      let field = outerMessage.$type.fieldsArray.filter((f) => { return f.type == message.$type.name })[0];
+      outerMessage[field.name] = message;
+    }
+
+    return this.sendProtocolMessage(outerMessage, name, innerType, waitForResponse, credentials);
   }
 
   /**
@@ -155,127 +145,151 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
     });
   }
 
-  /**
-  * Requests the current playback queue from the Apple TV.
-  * @param options Options to send
-  * @returns A Promise that resolves to a NewPlayingInfo object.
-  */
-  requestPlaybackQueue(options: PlaybackQueueRequestOptions): Promise<NowPlayingInfo> {
-    return this.requestPlaybackQueueWithWait(options, true);
-  }
-
-  /**
-  * Requests the current artwork from the Apple TV.
-  * @param width Image width
-  * @param height Image height
-  * @returns A Promise that resolves to a Buffer of data.
-  */
-  async requestArtwork(width: number = 400, height: number = 400): Promise<Buffer> {
-    let response = await this.requestPlaybackQueueWithWait({
-      artworkSize: {
-        width: width,
-        height: height
-      },
-      length: 1,
-      location: 0
-    }, true);
-    
-    let data = response?.payload?.playbackQueue?.contentItems?.[0]?.artworkData;
-
-    if (data) {
-      return data;
-    } else {
-      throw new Error("No artwork available");
-    }
-  }
-
-  /**
-  * Send a key command to the AppleTV.
-  * @param key The key to press.
-  * @returns A promise that resolves to the AppleTV object after the message has been sent.
-  */
-  sendKeyCommand(key: AppleTV.Key): Promise<AppleTV> {
-    switch (key) {
-      case AppleTV.Key.Up:
-        return this.sendKeyPressAndRelease(1, 0x8C);
-      case AppleTV.Key.Down:
-        return this.sendKeyPressAndRelease(1, 0x8D);
-      case AppleTV.Key.Left:
-        return this.sendKeyPressAndRelease(1, 0x8B);
-      case AppleTV.Key.Right:
-        return this.sendKeyPressAndRelease(1, 0x8A);
-      case AppleTV.Key.Menu:
-        return this.sendKeyPressAndRelease(1, 0x86);
-      case AppleTV.Key.Play:
-        return this.sendKeyPressAndRelease(12, 0xB0);
-      case AppleTV.Key.Pause:
-        return this.sendKeyPressAndRelease(12, 0xB1);
-      case AppleTV.Key.Next:
-        return this.sendKeyPressAndRelease(12, 0xB5);
-      case AppleTV.Key.Previous:
-        return this.sendKeyPressAndRelease(12, 0xB6);
-      case AppleTV.Key.Suspend:
-        return this.sendKeyPressAndRelease(1, 0x82);
-      case AppleTV.Key.Select:
-        return this.sendKeyPressAndRelease(1, 0x89);
-      case AppleTV.Key.Wake:
-        return this.sendKeyPressAndRelease(1, 0x83);
-      case AppleTV.Key.Home:
-        return this.sendKeyPressAndRelease(12, 0x40);
-      case AppleTV.Key.VolumeUp:
-        return this.sendKeyPressAndRelease(12, 0xE9);
-      case AppleTV.Key.VolumeDown:
-        return this.sendKeyPressAndRelease(12, 0xEA);
-    }
-  }
-
   waitForSequence(sequence: number, timeout: number = 3): Promise<Message> {
-    return this.connection.waitForSequence(sequence, timeout);
-  }
-
-  private sendKeyPressAndRelease(usePage: number, usage: number): Promise<AppleTV> {
     let that = this;
-    return this.sendKeyPress(usePage, usage, true)
-      .then(() => {
-        return that.sendKeyPress(usePage, usage, false);
-      });
-  }
-
-  private sendKeyPress(usePage: number, usage: number, down: boolean): Promise<AppleTV> {
-    let time = Buffer.from('438922cf08020000', 'hex');
-    let data = Buffer.concat([
-      number.UInt16toBufferBE(usePage),
-      number.UInt16toBufferBE(usage),
-      down ? number.UInt16toBufferBE(1) : number.UInt16toBufferBE(0)
-    ]);
-
-    let body = {
-      hidEventData: Buffer.concat([
-        time,
-        Buffer.from('00000000000000000100000000000000020' + '00000200000000300000001000000000000', 'hex'),
-        data,
-        Buffer.from('0000000000000001000000', 'hex')
-      ])
+    let handler = (message: Message, resolve: any) => {
+      let tlvData = tlv.decode(message.payload.pairingData);
+      if (Buffer.from([sequence]).equals(tlvData[tlv.Tag.Sequence])) {
+        resolve(message);
+      }
     };
-    let that = this;
-    return this.sendMessage("SendHIDEventMessage", "SendHIDEventMessage", body, false)
-      .then(() => {
-        return that;
+
+    return new Promise<Message>((resolve, reject) => {
+      that.on('message', (message: Message) => {
+        if (message.type == Message.Type.CryptoPairingMessage) {
+          handler(message, resolve);
+        }
       });
+      setTimeout(() => {
+        reject(new Error("Timed out waiting for crypto sequence " + sequence));
+      }, timeout * 1000);
+    })
+    .then(value => {
+      that.removeListener('message', handler);
+      return value;
+    });
   }
 
-  private requestPlaybackQueueWithWait(options: PlaybackQueueRequestOptions, waitForResponse: boolean): Promise<any> {
-    var params: any = options;
-    params.requestID = uuid();
-    if (options.artworkSize) {
-      params.artworkWidth = options.artworkSize.width;
-      params.artworkHeight = options.artworkSize.height;
-      delete params.artworkSize;
+  /**
+  * Call this method when a chunk of data is received.
+  * @param data  A Buffer of data.
+  * @returns A promise that resolves to the Message (if there is one).
+  */
+  async handleChunk(data: Buffer): Promise<Message> {
+    this.buffer = Buffer.concat([this.buffer, data]);
+    let length = varint.decode(this.buffer);
+    let messageBytes = this.buffer.slice(varint.decode.bytes, length + varint.decode.bytes);
+
+    if (messageBytes.length < length) {
+      this.emit('debug', "Message length mismatch");
+      return null;
     }
-    return this.sendMessage("PlaybackQueueRequestMessage", "PlaybackQueueRequestMessage", params, waitForResponse);
+
+    this.buffer = this.buffer.slice(length + varint.decode.bytes);
+
+    this.emit('debug', "DEBUG: <<<< Received Data=" + messageBytes.toString('hex'));
+  
+    if (this.credentials && this.credentials.readKey) {
+      messageBytes = this.credentials.decrypt(messageBytes);
+      this.emit('debug', "DEBUG: Decrypted Data=" + messageBytes.toString('hex'));
+    }
+    
+    let protoMessage = await this.decodeMessage(messageBytes);
+    let message = new Message(protoMessage);
+
+    if (message) {
+      this.emit('message', message);
+      this.executeCallbacks(message.identifier, message);
+    }
+    
+    return message;
   }
 
-  private sendIntroduction(): Promise<Message> {
+  write(data: Buffer) {
+    throw new Error("Subclasses must override this")
+  }
+
+  private addCallback(identifier: string, callback: (message: Message) => void) {
+    if (this.callbacks.has(identifier)) {
+      this.callbacks.get(identifier).push(<MessageCallback>{
+        callback: callback
+      });
+    } else {
+      this.callbacks.set(identifier, [<MessageCallback>{
+        callback: callback
+      }]);
+    }
+  }
+
+  private executeCallbacks(identifier: string, message: Message): boolean {
+    let callbacks = this.callbacks.get(identifier);
+    if (callbacks) {
+      for (var i = 0; i < callbacks.length; i++) {
+        let callback = callbacks[i];
+        callback.callback(message);
+        this.callbacks.get(identifier).splice(i, 1);
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  // private sendBlank(typeName: string, waitForResponse: boolean, credentials?: Credentials): Promise<Message> {
+  //   let that = this;
+  //   return load(path.resolve(__dirname + "/protos/ProtocolMessage.proto"))
+  //     .then(root => {
+  //       let ProtocolMessage = root.lookupType("ProtocolMessage");
+  //       let types = ProtocolMessage.lookupEnum("Type");
+  //       let type = types.values[typeName];
+  //       let name = camelcase(typeName);
+  //       let message = ProtocolMessage.create({
+  //         type: type,
+  //         priority: 0
+  //       });
+
+  //       return that.sendProtocolMessage(message, name, type, waitForResponse, credentials);
+  //     });
+  // }
+
+  private sendProtocolMessage(message: ProtoMessage<{}>, name: string, type: number, waitForResponse: boolean, credentials?: Credentials): Promise<Message> {
+    let that = this;
+    return new Promise<Message>((resolve, reject) => {
+      let ProtocolMessage: any = message.$type;
+
+      if (waitForResponse) {
+        let identifier = uuid();
+        message["identifier"] = identifier;
+        let callback = (message: Message) => {
+          resolve(message);
+        }; 
+        that.addCallback(identifier, callback);
+      }
+      
+      let data = ProtocolMessage.encode(message).finish();
+      that.emit('debug', "DEBUG: >>>> Send Data=" + data.toString('hex'));
+
+      if (credentials && credentials.writeKey) {
+        let encrypted = credentials.encrypt(data);
+        that.emit('debug', "DEBUG: >>>> Send Encrypted Data=" + encrypted.toString('hex'));
+        that.emit('debug', "DEBUG: >>>> Send Protobuf=" + JSON.stringify(new Message(message), null, 2));
+        let messageLength = Buffer.from(varint.encode(encrypted.length));
+        let bytes = Buffer.concat([messageLength, encrypted]);
+        that.write(bytes);
+      } else {
+        that.emit('debug', "DEBUG: >>>> Send Protobuf=" + JSON.stringify(new Message(message), null, 2));
+        let messageLength = Buffer.from(varint.encode(data.length));
+        let bytes = Buffer.concat([messageLength, data]);
+        that.write(bytes);
+      }
+
+      if (!waitForResponse) {
+        resolve(new Message(message));
+      }
+    });
+  }
+
+  sendIntroduction(): Promise<Message> {
     let body = {
       uniqueIdentifier: this.pairingId,
       name: 'node-appletv',
@@ -291,106 +305,26 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
     return this.sendMessage('DeviceInfoMessage', 'DeviceInfoMessage', body, true);
   }
 
-  private sendConnectionState(): Promise<Message> {
+  private decodeMessage(data: Buffer): Promise<ProtoMessage<{}>> {
     let that = this;
-    return load(path.resolve(__dirname + "/protos/SetConnectionStateMessage.proto"))
+    return load(path.resolve(__dirname + "/protos/ProtocolMessage.proto"))
       .then(root => {
-        let type = root.lookupType('SetConnectionStateMessage');
-        let stateEnum = type.lookupEnum('ConnectionState');
-        let message = type.create({
-          state: stateEnum.values['Connected']
-        });
-
-        return that
-          .connection
-          .send(message, false, 0, that.credentials);
-      });
-  }
-
-  private sendClientUpdatesConfig(config: ClientUpdatesConfig): Promise<Message> {
-    return this.sendMessage('ClientUpdatesConfigMessage', 'ClientUpdatesConfigMessage', config, false);
-  }
-
-  private sendWakeDevice(): Promise<Message> {
-    return this.sendMessage('WakeDeviceMessage', 'WakeDeviceMessage', {}, false);
-  }
-
-  private onReceiveMessage(message: Message) {
-    this.emit('message', message);
-    if (message.type == Message.Type.SetStateMessage) {
-      if (message.payload == null) {
-        this.emit('nowPlaying', null);
-        return;
-      }
-      if (message.payload.nowPlayingInfo) {
-        let info = new NowPlayingInfo(message.payload);
-        this.emit('nowPlaying', info);
-      }
-      if (message.payload.supportedCommands) {
-        let commands = (message.payload.supportedCommands.supportedCommands || [])
-          .map(sc => {
-            return new SupportedCommand(sc.command, sc.enabled || false, sc.canScrub || false);
-          });
-        this.emit('supportedCommands', commands);
-      }
-      if (message.payload.playbackQueue) {
-        this.emit('playbackQueue', message.payload.playbackQueue);
-      }
-    }
-  }
-
-  private onNewListener(event: string, listener: any) {
-    let that = this;
-    if (this.queuePollTimer == null && (event == 'nowPlaying' || event == 'supportedCommands')) {
-      this.queuePollTimer = setInterval(() => {
-        if (that.connection.isOpen) {
-          that.requestPlaybackQueueWithWait({
-            length: 100,
-            location: 0,
-            artworkSize: {
-              width: -1,
-              height: 368
-            }
-          }, false).then(() => {}).catch(error => {});
+        let ProtocolMessage = root.lookupType("ProtocolMessage");
+        let preMessage = ProtocolMessage.decode(data);
+        let type = preMessage.toJSON().type;
+        if (type == null) {
+          return Promise.resolve(preMessage);
         }
-      }, 5000);
-    }
-  }
+        let name = type[0].toUpperCase() + camelcase(type).substring(1);
 
-  private onRemoveListener(event: string, listener: any) {
-    if (this.queuePollTimer != null && (event == 'nowPlaying' || event == 'supportedCommands')) {
-      let listenerCount = this.listenerCount('nowPlaying') + this.listenerCount('supportedCommands');
-      if (listenerCount == 0) {
-        clearInterval(this.queuePollTimer);
-        this.queuePollTimer = null;
-      }
-    }
-  }
-
-  private setupListeners() {
-    let that = this;
-    this.connection.on('message', (message: Message) => {
-      that.onReceiveMessage(message);
-    })
-    .on('connect', () => {
-      that.emit('connect');
-    })
-    .on('close', () => {
-      that.emit('close');
-    })
-    .on('error', (error) => {
-      that.emit('error', error);
-    })
-    .on('debug', (message) => {
-      that.emit('debug', message);
-    });
-
-    this.on('newListener', (event, listener) => {
-      that.onNewListener(event, listener);
-    });
-    this.on('removeListener', (event, listener) => {
-      that.onRemoveListener(event, listener);
-    });
+        return load(path.resolve(__dirname + "/protos/" + name + ".proto"))
+          .then(root => {
+            let ProtocolMessage = root.lookupType("ProtocolMessage");
+            let message = ProtocolMessage.decode(data);
+            that.emit('debug', "DEBUG: <<<< Received Protobuf=" + JSON.stringify(new Message(message), null, 2));
+            return message;
+          });
+      });
   }
 }
 

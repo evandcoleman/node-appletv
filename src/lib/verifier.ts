@@ -4,7 +4,7 @@ import * as ed25519 from 'ed25519';
 import * as crypto from 'crypto';
 import * as curve25519 from 'curve25519-n2';
 
-import { AppleTV } from './appletv';
+import { TVClient } from './tvclient';
 import { Credentials } from './credentials';
 import { Message } from './message';
 import tlv from './util/tlv';
@@ -18,7 +18,7 @@ type PairingData = {
 }
 
 export class Verifier {
-  constructor(public device: AppleTV) {
+  constructor(public device: TVClient) {
 
   }
 

@@ -1,6 +1,6 @@
 import { Credentials } from './lib/credentials';
 import { AppleTV } from './lib/appletv';
-import { Connection } from './lib/connection';
+import { TVClient } from './lib/tvclient';
 import { Browser } from './lib/browser';
 import { NowPlayingInfo } from './lib/now-playing-info';
 import { Message } from './lib/message';
@@ -12,7 +12,7 @@ import { SupportedCommand } from './lib/supported-command';
 * @param timeout  An optional timeout value (in seconds) to give up the search after.
 * @returns A promise that resolves to an array of AppleTV objects. If you provide a `uniqueIdentifier` the array is guaranteed to only contain one object.
 */
-export function scan(uniqueIdentifier?: string, timeout?: number): Promise<AppleTV[]> {
+export function scan(uniqueIdentifier?: string, timeout?: number): Promise<TVClient[]> {
   let browser = new Browser();
   return browser.scan(uniqueIdentifier, timeout);
 }
@@ -28,7 +28,7 @@ export function parseCredentials(text: string): Credentials {
 
 export {
   AppleTV,
-  Connection,
+  TVClient,
   Browser,
   NowPlayingInfo,
   Credentials,

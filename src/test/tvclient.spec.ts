@@ -1,4 +1,5 @@
 import { AppleTV } from '../lib/appletv';
+import { TVClient } from '../lib/tvclient';
 import { Message } from '../lib/message';
 import { expect } from 'chai';
 import { Socket } from 'net';
@@ -15,7 +16,7 @@ describe('apple tv tests', function() {
         callback();
     });
 
-    this.device = new AppleTV({
+    this.device = new TVClient({
       addresses: ['127.0.0.1'],
       port: 12345,
       flags: 0,
@@ -46,7 +47,7 @@ describe('apple tv tests', function() {
   });
 
   it('should send introduction', async function() {
-    await this.device.openConnection();
+    await this.device.open();
 
     let messages = this.sentMessages();
 
@@ -57,7 +58,7 @@ describe('apple tv tests', function() {
   it('should request artwork', async function() {
     let width = 640;
     let height = 480;
-    await this.device.openConnection();
+    await this.device.open();
     try {
       await this.device.requestArtwork(width, height);
     } catch (error) {}
@@ -73,7 +74,7 @@ describe('apple tv tests', function() {
   });
 
   it('should press and release menu', async function() {
-    await this.device.openConnection();
+    await this.device.open();
     await this.device.sendKeyCommand(AppleTV.Key.Menu);
 
     let messages = this.sentMessages();
@@ -84,7 +85,7 @@ describe('apple tv tests', function() {
   });
 
   it('should read now playing', async function() {
-    await this.device.openConnection();
+    await this.device.open();
 
     var spy = sinon.spy();
     this.device.on('nowPlaying', spy);

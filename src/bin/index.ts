@@ -2,6 +2,7 @@ import * as caporal from 'caporal';
 let cli = caporal as any;
 
 import { AppleTV } from '../lib/appletv';
+import { TVClient } from '../lib/tvclient';
 import { Credentials } from '../lib/credentials';
 import { NowPlayingInfo } from '../lib/now-playing-info';
 import { Message } from '../lib/message';
@@ -12,7 +13,7 @@ import { promisify } from 'util';
 
 const project = require('../../package.json')
 
-async function openDevice(credentials: Credentials, logger: any): Promise<AppleTV> {
+async function openDevice(credentials: Credentials, logger: any): Promise<TVClient> {
   let device = await scan(logger, null, credentials.uniqueIdentifier);
   device.on('debug', (message: string) => {
     logger.debug(message);
@@ -21,7 +22,7 @@ async function openDevice(credentials: Credentials, logger: any): Promise<AppleT
     logger.error(error.message);
     logger.debug(error.stack);
   });
-  return await device.openConnection(credentials);
+  return await device.open(credentials);
 }
 
 cli

@@ -1,35 +1,37 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const net_1 = require("net");
-const appletv_1 = require("../../lib/appletv");
-const connection_1 = require("../../lib/connection");
-class MockServer {
-    constructor() {
-        let port = 65416;
-        this.device = new appletv_1.AppleTV({
-            addresses: ['127.0.0.1'],
-            port: port,
-            txtRecord: {
-                Name: "Mock Apple TV",
-                UniqueIdentifier: "MockAppleTVUUID"
-            }
-        });
-        let d = this.device;
-        let that = this;
-        this.message = new Promise(function (resolve, reject) {
-            that.server = net_1.createServer(function (socket) {
-                let connection = new connection_1.Connection(d, socket);
-                d.connection = connection;
-                d.on('message', function (message) {
-                    resolve(message);
-                });
-            });
-            that.server.listen(port);
-        });
-    }
-    close() {
-        this.server.close();
-        this.device.connection.close();
-    }
-}
-exports.MockServer = MockServer;
+// import { createServer, Server } from 'net';
+// import { AppleTV } from '../../lib/appletv';
+// import { Connection } from '../../lib/connection';
+// import { Message } from '../../lib/message';
+// import * as mdns from 'mdns';
+// export class MockServer {
+//   public device: AppleTV;
+//   public message: Promise<Message>;
+//   private server: Server;
+//   constructor() {
+//     let port = 65416;
+//     this.device = new AppleTV({
+//       addresses: ['127.0.0.1'],
+//       port: port,
+//       txtRecord: {
+//         Name: "Mock Apple TV",
+//         UniqueIdentifier: "MockAppleTVUUID"
+//       }
+//     } as mdns.Service);
+//     let d = this.device;
+//     let that = this;
+//     this.message = new Promise<Message>(function(resolve, reject) {
+//       that.server = createServer(function(socket) {
+//         let connection = new Connection(d, socket);
+//         d.connection = connection;
+//         d.on('message', function(message) {
+//           resolve(message);
+//         });
+//       });
+//       that.server.listen(port);
+//     });
+//   }
+//   close() {
+//     this.server.close();
+//     this.device.connection.close();
+//   }
+// }

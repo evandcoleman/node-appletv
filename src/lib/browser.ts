@@ -1,13 +1,13 @@
 import { EventEmitter } from 'events';
 import * as mdns from 'mdns';
 
-import { AppleTV } from './appletv';
+import { TVClient } from './tvclient';
 
 export class Browser {
   private browser: mdns.Browser;
-  private services: AppleTV[];
+  private services: TVClient[];
   private uniqueIdentifier: string;
-  private onComplete: (device: AppleTV[]) => void;
+  private onComplete: (device: TVClient[]) => void;
   private onFailure: (error: Error) => void;
 
   /**
@@ -25,7 +25,7 @@ export class Browser {
 
     let that = this;
     this.browser.on('serviceUp', function(service) {
-      let device = new AppleTV(service);
+      let device = new TVClient(service);
       if (that.uniqueIdentifier && device.uid == that.uniqueIdentifier) {
         that.browser.stop();
         that.onComplete([device]);
@@ -41,7 +41,7 @@ export class Browser {
   * @param timeout  An optional timeout value (in seconds) to give up the search after.
   * @returns A promise that resolves to an array of AppleTV objects. If you provide a `uniqueIdentifier` the array is guaranteed to only contain one object.
   */
-  scan(uniqueIdentifier?: string, timeout?: number): Promise<AppleTV[]> {
+  scan(uniqueIdentifier?: string, timeout?: number): Promise<TVClient[]> {
     this.services = [];
     this.uniqueIdentifier = uniqueIdentifier;
     this.browser.start();

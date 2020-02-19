@@ -1,8 +1,6 @@
 /// <reference types="node" />
-import { Service } from 'mdns';
+import { Message as ProtoMessage } from 'protobufjs';
 import { EventEmitter } from 'events';
-import { Socket } from 'net';
-import { Connection } from './connection';
 import { Credentials } from './credentials';
 import { NowPlayingInfo } from './now-playing-info';
 import { SupportedCommand } from './supported-command';
@@ -26,31 +24,25 @@ export interface ClientUpdatesConfig {
     keyboardUpdates: boolean;
 }
 export declare class AppleTV extends EventEmitter {
-    private service;
     name: string;
-    address: string;
     port: number;
     uid: string;
     pairingId: string;
     credentials: Credentials;
-    connection: Connection;
-    private queuePollTimer?;
-    constructor(service: Service, socket?: Socket);
-    /**
-    * Pair with an already discovered AppleTV.
-    * @returns A promise that resolves to the AppleTV object.
-    */
-    pair(): Promise<(pin: string) => Promise<AppleTV>>;
+    private callbacks;
+    private ProtocolMessage;
+    private buffer;
+    constructor(name: string, port: number, uid: string);
     /**
     * Opens a connection to the AppleTV over the MRP protocol.
     * @param credentials  The credentials object for this AppleTV
     * @returns A promise that resolves to the AppleTV object.
     */
-    openConnection(credentials?: Credentials): Promise<AppleTV>;
+    open(credentials?: Credentials): Promise<this>;
     /**
     * Closes the connection to the Apple TV.
     */
-    closeConnection(): void;
+    close(): void;
     /**
     * Send a Protobuf message to the AppleTV. This is for advanced usage only.
     * @param definitionFilename  The Protobuf filename of the message type.
@@ -60,6 +52,7 @@ export declare class AppleTV extends EventEmitter {
     * @returns A promise that resolves to the response from the AppleTV.
     */
     sendMessage(definitionFilename: string, messageType: string, body: {}, waitForResponse: boolean, priority?: number): Promise<Message>;
+    send(message: ProtoMessage<{}>, waitForResponse: boolean, priority: number, credentials?: Credentials): Promise<Message>;
     /**
     * Wait for a single message of a specified type.
     * @param type  The type of the message to wait for.
@@ -67,37 +60,19 @@ export declare class AppleTV extends EventEmitter {
     * @returns A promise that resolves to the Message.
     */
     messageOfType(type: Message.Type, timeout?: number): Promise<Message>;
-    /**
-    * Requests the current playback queue from the Apple TV.
-    * @param options Options to send
-    * @returns A Promise that resolves to a NewPlayingInfo object.
-    */
-    requestPlaybackQueue(options: PlaybackQueueRequestOptions): Promise<NowPlayingInfo>;
-    /**
-    * Requests the current artwork from the Apple TV.
-    * @param width Image width
-    * @param height Image height
-    * @returns A Promise that resolves to a Buffer of data.
-    */
-    requestArtwork(width?: number, height?: number): Promise<Buffer>;
-    /**
-    * Send a key command to the AppleTV.
-    * @param key The key to press.
-    * @returns A promise that resolves to the AppleTV object after the message has been sent.
-    */
-    sendKeyCommand(key: AppleTV.Key): Promise<AppleTV>;
     waitForSequence(sequence: number, timeout?: number): Promise<Message>;
-    private sendKeyPressAndRelease;
-    private sendKeyPress;
-    private requestPlaybackQueueWithWait;
-    private sendIntroduction;
-    private sendConnectionState;
-    private sendClientUpdatesConfig;
-    private sendWakeDevice;
-    private onReceiveMessage;
-    private onNewListener;
-    private onRemoveListener;
-    private setupListeners;
+    /**
+    * Call this method when a chunk of data is received.
+    * @param data  A Buffer of data.
+    * @returns A promise that resolves to the Message (if there is one).
+    */
+    handleChunk(data: Buffer): Promise<Message>;
+    write(data: Buffer): void;
+    private addCallback;
+    private executeCallbacks;
+    private sendProtocolMessage;
+    sendIntroduction(): Promise<Message>;
+    private decodeMessage;
 }
 export declare module AppleTV {
     interface Events {

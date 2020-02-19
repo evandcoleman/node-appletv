@@ -2,14 +2,14 @@ import { prompt } from 'inquirer';
 import * as caporal from 'caporal';
 import * as ora from 'ora';
 
-import { AppleTV } from '../lib/appletv';
+import { TVClient } from '../lib/tvclient';
 import { Pairing } from '../lib/pairing';
 import { Verifier } from '../lib/verifier';
 
-export function pair(device: AppleTV, logger: Logger): Promise<AppleTV> {
+export function pair(device: TVClient, logger: Logger): Promise<TVClient> {
   let spinner = ora("Connecting to " + device.name).start()
   return device
-    .openConnection()
+    .open()
     .then(() => {
       spinner.succeed().start('Initiating Pairing')
       let pairing = new Pairing(device);

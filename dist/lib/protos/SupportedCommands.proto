@@ -1,7 +1,0 @@
-syntax = "proto2";
-
-import "CommandInfo.proto";
-
-message SupportedCommands {
-    repeated CommandInfo supportedCommands = 1;
-}

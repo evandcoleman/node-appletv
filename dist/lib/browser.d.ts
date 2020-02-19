@@ -1,4 +1,4 @@
-import { AppleTV } from './appletv';
+import { TVClient } from './tvclient';
 export declare class Browser {
     private browser;
     private services;
@@ -16,5 +16,5 @@ export declare class Browser {
     * @param timeout  An optional timeout value (in seconds) to give up the search after.
     * @returns A promise that resolves to an array of AppleTV objects. If you provide a `uniqueIdentifier` the array is guaranteed to only contain one object.
     */
-    scan(uniqueIdentifier?: string, timeout?: number): Promise<AppleTV[]>;
+    scan(uniqueIdentifier?: string, timeout?: number): Promise<TVClient[]>;
 }

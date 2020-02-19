@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import * as ed25519 from 'ed25519';
 
-import { AppleTV } from './appletv';
+import { TVClient } from './tvclient';
 import { Credentials } from './credentials';
 import { Message } from './message';
 import tlv from './util/tlv';
@@ -22,7 +22,7 @@ export class Pairing {
   private devicePublicKey: Buffer;
   private deviceProof: Buffer;
 
-  constructor(public device: AppleTV) {
+  constructor(public device: TVClient) {
     
   }
 
@@ -30,7 +30,7 @@ export class Pairing {
   * Initiates the pairing process
   * @returns A promise that resolves to a callback which takes in the pairing pin from the Apple TV.
   */
-  async initiatePair(): Promise<(pin: string) => Promise<AppleTV>> {
+  async initiatePair(): Promise<(pin: string) => Promise<TVClient>> {
     let that = this;
     let tlvData = tlv.encode(
       tlv.Tag.PairingMethod, 0x00,
@@ -75,7 +75,7 @@ export class Pairing {
     };
   }
 
-  private async completePairing(pin: string): Promise<AppleTV> {
+  private async completePairing(pin: string): Promise<TVClient> {
     await this.sendThirdSequence(pin);
     let message = await this.device.waitForSequence(0x04);
     let pairingData = message.payload.pairingData;

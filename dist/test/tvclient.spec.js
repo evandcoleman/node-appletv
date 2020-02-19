@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const appletv_1 = require("../lib/appletv");
+const tvclient_1 = require("../lib/tvclient");
 const message_1 = require("../lib/message");
 const chai_1 = require("chai");
 const net_1 = require("net");
@@ -22,7 +23,7 @@ describe('apple tv tests', function () {
         sinon.stub(socket, 'connect').callsFake(function (port, host, callback) {
             callback();
         });
-        this.device = new appletv_1.AppleTV({
+        this.device = new tvclient_1.TVClient({
             addresses: ['127.0.0.1'],
             port: 12345,
             flags: 0,
@@ -49,7 +50,7 @@ describe('apple tv tests', function () {
     });
     it('should send introduction', function () {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.device.openConnection();
+            yield this.device.open();
             let messages = this.sentMessages();
             chai_1.expect(messages.length).to.equal(1);
             chai_1.expect(messages[0].type).to.equal(message_1.Message.Type.DeviceInfoMessage);
@@ -59,7 +60,7 @@ describe('apple tv tests', function () {
         return __awaiter(this, void 0, void 0, function* () {
             let width = 640;
             let height = 480;
-            yield this.device.openConnection();
+            yield this.device.open();
             try {
                 yield this.device.requestArtwork(width, height);
             }
@@ -75,7 +76,7 @@ describe('apple tv tests', function () {
     });
     it('should press and release menu', function () {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.device.openConnection();
+            yield this.device.open();
             yield this.device.sendKeyCommand(appletv_1.AppleTV.Key.Menu);
             let messages = this.sentMessages();
             chai_1.expect(messages.length).to.equal(3);
@@ -85,7 +86,7 @@ describe('apple tv tests', function () {
     });
     it('should read now playing', function () {
         return __awaiter(this, void 0, void 0, function* () {
-            yield this.device.openConnection();
+            yield this.device.open();
             var spy = sinon.spy();
             this.device.on('nowPlaying', spy);
             this.device.connection.emit('message', require('./fixtures/now-playing.json'));

@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const mdns = require("mdns");
-const appletv_1 = require("./appletv");
+const tvclient_1 = require("./tvclient");
 class Browser {
     /**
     * Creates a new Browser
@@ -17,7 +17,7 @@ class Browser {
         this.services = [];
         let that = this;
         this.browser.on('serviceUp', function (service) {
-            let device = new appletv_1.AppleTV(service);
+            let device = new tvclient_1.TVClient(service);
             if (that.uniqueIdentifier && device.uid == that.uniqueIdentifier) {
                 that.browser.stop();
                 that.onComplete([device]);

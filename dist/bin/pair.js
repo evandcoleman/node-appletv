@@ -6,7 +6,7 @@ const pairing_1 = require("../lib/pairing");
 function pair(device, logger) {
     let spinner = ora("Connecting to " + device.name).start();
     return device
-        .openConnection()
+        .open()
         .then(() => {
         spinner.succeed().start('Initiating Pairing');
         let pairing = new pairing_1.Pairing(device);

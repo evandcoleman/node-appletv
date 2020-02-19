@@ -1,7 +1,7 @@
-import { AppleTV } from './appletv';
+import { TVClient } from './tvclient';
 export declare class Verifier {
-    device: AppleTV;
-    constructor(device: AppleTV);
+    device: TVClient;
+    constructor(device: TVClient);
     verify(): Promise<{}>;
     private requestPairingData;
     private completeVerification;

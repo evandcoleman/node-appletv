@@ -28,7 +28,7 @@ function openDevice(credentials, logger) {
             logger.error(error.message);
             logger.debug(error.stack);
         });
-        return yield device.openConnection(credentials);
+        return yield device.open(credentials);
     });
 }
 cli
