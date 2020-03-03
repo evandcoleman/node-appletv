@@ -4,8 +4,10 @@ export declare class Message {
     type: Message.Type;
     identifier: string;
     payload: any;
+    private typeName;
     constructor(message: ProtoMessage<{}>);
     toObject(): any;
+    toString(): string;
 }
 export declare module Message {
     enum Type {

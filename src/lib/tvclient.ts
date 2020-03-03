@@ -6,9 +6,8 @@ import { EventEmitter } from 'events';
 import { Socket } from 'net';
 import { promisify } from 'util';
 
-import { AppleTV, PlaybackQueueRequestOptions, ClientUpdatesConfig } from './appletv';
-import { Pairing } from './pairing'; 
-import { Verifier } from './verifier';
+import { AppleTV, PlaybackQueueRequestOptions, ClientUpdatesConfig, SendProtocolMessageOptions, SendMessageOptions } from './appletv';
+import { PairingClient } from './pairing'; 
 import { Credentials } from './credentials';
 import { NowPlayingInfo } from './now-playing-info';
 import { SupportedCommand } from './supported-command';
@@ -18,12 +17,21 @@ import number from './util/number';
 export class TVClient extends AppleTV {
   public address: string;
   public socket: Socket;
+  public remoteUid: string;
+
+  private pairingClient: PairingClient;
 
   constructor(private service: Service, socket?: Socket) {
-    super(service.txtRecord.Name, service.port, service.txtRecord.UniqueIdentifier);
+    super(service.txtRecord.Name, service.port);
 
+    this.remoteUid = service.txtRecord.LocalAirPlayReceiverPairingIdentity;
     this.address = service.addresses.filter(x => x.includes('.'))[0];
     this.socket = socket || new Socket();
+    this.pairingClient = new PairingClient(this);
+    this.pairingClient.on('debug', ((message) => {
+      this.emit('debug', message);
+      this.emit('pairDebug', message);
+    }).bind(this));
 
     this.setupListeners();
   }
@@ -32,27 +40,50 @@ export class TVClient extends AppleTV {
   * Pair with an already discovered AppleTV.
   * @returns A promise that resolves to the AppleTV object.
   */
-  pair(): Promise<(pin: string) => Promise<AppleTV>> {
-    let pairing = new Pairing(this);
-    return pairing.initiatePair();
+  async pair(): Promise<(pin: string) => Promise<TVClient>> {
+    return this.pairingClient.pair();
   }
 
+  /**
+  * Opens a connection to the AppleTV over the MRP protocol.
+  * @param credentials  The credentials object for this AppleTV
+  * @returns A promise that resolves to the AppleTV object.
+  */
   async open(credentials?: Credentials): Promise<this> {
-    await super.open(credentials);
-
-    await this.openSocket();
-    await this.sendIntroduction();
-
     if (credentials) {
-      let verifier = new Verifier(this);
-      let keys = await verifier.verify();
-      this.credentials.readKey = keys['readKey'];
-      this.credentials.writeKey = keys['writeKey'];
-      this.emit('debug', "DEBUG: Keys Read=" + this.credentials.readKey.toString('hex') + ", Write=" + this.credentials.writeKey.toString('hex'));
-      await this.sendConnectionState();
+      this.uid = credentials.localUid.toString();      
     }
 
-    if (credentials) {
+    this.credentials = credentials;
+    let root = await load(path.resolve(__dirname + "/protos/ProtocolMessage.proto"));
+    this.ProtocolMessage = root.lookupType("ProtocolMessage");
+
+    await this.openSocket();
+    await this.sendIntroduction(this.socket, {
+      name: 'node-appletv',
+      localizedModelName: 'iPhone',
+      systemBuildVersion: '14G60',
+      applicationBundleIdentifier: 'com.apple.TVRemote',
+      applicationBundleVersion: '320.18',
+      protocolVersion: 1,
+      allowsPairing: true,
+      lastSupportedMessageType: 45,
+      supportsSystemPairing: true,
+    });
+
+    await this.beginSession();
+
+    return this;
+  }
+
+  async beginSession(): Promise<this> {
+    if (this.credentials && !this.credentials.readKey) {
+      await this.pairingClient.verify();
+      
+      this.emit('debug', "DEBUG: Keys Read=" + this.credentials.readKey.toString('hex') + ", Write=" + this.credentials.writeKey.toString('hex'));
+      
+      await this.sendConnectionState();
+
       await this.sendClientUpdatesConfig({
         nowPlayingUpdates: true,
         artworkUpdates: true,
@@ -64,13 +95,13 @@ export class TVClient extends AppleTV {
     return this;
   }
 
-  private openSocket(): Promise<any> {
+  private async openSocket(): Promise<any> {
     let that = this;
     return new Promise<void>((resolve, reject) => {
       that.socket.connect(this.port, this.address, function() {
         that.socket.on('data', async (data) => {
           try {
-            await that.handleChunk(data);
+            await that.handleChunk(data, that.socket, that.credentials);
           } catch(error) {
             that.emit('error', error);
           }
@@ -85,16 +116,12 @@ export class TVClient extends AppleTV {
     this.socket.end();
   }
 
-  write(data: Buffer) {
-    this.socket.write(data);
-  }
-
   /**
   * Requests the current playback queue from the Apple TV.
   * @param options Options to send
   * @returns A Promise that resolves to a NewPlayingInfo object.
   */
-  requestPlaybackQueue(options: PlaybackQueueRequestOptions): Promise<NowPlayingInfo> {
+  async requestPlaybackQueue(options: PlaybackQueueRequestOptions): Promise<NowPlayingInfo> {
     return this.requestPlaybackQueueWithWait(options, true);
   }
 
@@ -128,7 +155,7 @@ export class TVClient extends AppleTV {
   * @param key The key to press.
   * @returns A promise that resolves to the AppleTV object after the message has been sent.
   */
-  sendKeyCommand(key: AppleTV.Key): Promise<AppleTV> {
+  async sendKeyCommand(key: AppleTV.Key): Promise<AppleTV> {
     switch (key) {
       case AppleTV.Key.Up:
         return this.sendKeyPressAndRelease(1, 0x8C);
@@ -163,15 +190,22 @@ export class TVClient extends AppleTV {
     }
   }
 
-  private sendKeyPressAndRelease(usePage: number, usage: number): Promise<AppleTV> {
-    let that = this;
-    return this.sendKeyPress(usePage, usage, true)
-      .then(() => {
-        return that.sendKeyPress(usePage, usage, false);
-      });
+  async sendMessage(options: SendMessageOptions): Promise<Message> {
+    options.socket = this.socket;
+    return super.sendMessage(options);
   }
 
-  private sendKeyPress(usePage: number, usage: number, down: boolean): Promise<AppleTV> {
+  async send(options: SendProtocolMessageOptions): Promise<Message> {
+    options.socket = this.socket;
+    return super.send(options);
+  }
+
+  private async sendKeyPressAndRelease(usePage: number, usage: number): Promise<AppleTV> {
+    await this.sendKeyPress(usePage, usage, true)
+    return this.sendKeyPress(usePage, usage, false)
+  }
+
+  private async sendKeyPress(usePage: number, usage: number, down: boolean): Promise<AppleTV> {
     let time = Buffer.from('438922cf08020000', 'hex');
     let data = Buffer.concat([
       number.UInt16toBufferBE(usePage),
@@ -187,14 +221,15 @@ export class TVClient extends AppleTV {
         Buffer.from('0000000000000001000000', 'hex')
       ])
     };
-    let that = this;
-    return this.sendMessage("SendHIDEventMessage", "SendHIDEventMessage", body, false)
-      .then(() => {
-        return that;
-      });
+    await this.sendMessage({
+      type: 'SendHIDEventMessage',
+      body: body
+    });
+
+    return this;
   }
 
-  private requestPlaybackQueueWithWait(options: PlaybackQueueRequestOptions, waitForResponse: boolean): Promise<any> {
+  private async requestPlaybackQueueWithWait(options: PlaybackQueueRequestOptions, waitForResponse: boolean): Promise<any> {
     var params: any = options;
     params.requestID = uuid();
     if (options.artworkSize) {
@@ -202,33 +237,41 @@ export class TVClient extends AppleTV {
       params.artworkHeight = options.artworkSize.height;
       delete params.artworkSize;
     }
-    return this.sendMessage("PlaybackQueueRequestMessage", "PlaybackQueueRequestMessage", params, waitForResponse);
+    return this.sendMessage({
+      type: 'PlaybackQueueRequestMessage',
+      body: params,
+      waitForResponse: waitForResponse
+    });
   }
 
-  private sendConnectionState(): Promise<Message> {
-    let that = this;
-    return load(path.resolve(__dirname + "/protos/SetConnectionStateMessage.proto"))
-      .then(root => {
-        let type = root.lookupType('SetConnectionStateMessage');
+  private async sendConnectionState(): Promise<Message> {
+    return this.sendMessage({
+      type: 'SetConnectionStateMessage',
+      bodyBuilder: (type) => {
         let stateEnum = type.lookupEnum('ConnectionState');
-        let message = type.create({
+
+        return {
           state: stateEnum.values['Connected']
-        });
-
-        return this
-          .send(message, false, 0, that.credentials);
-      });
+        };
+      }
+    });
   }
 
-  private sendClientUpdatesConfig(config: ClientUpdatesConfig): Promise<Message> {
-    return this.sendMessage('ClientUpdatesConfigMessage', 'ClientUpdatesConfigMessage', config, false);
+  private async sendClientUpdatesConfig(config: ClientUpdatesConfig): Promise<Message> {
+    return this.sendMessage({
+      type: 'ClientUpdatesConfigMessage',
+      body: config
+    });
   }
 
-  private sendWakeDevice(): Promise<Message> {
-    return this.sendMessage('WakeDeviceMessage', 'WakeDeviceMessage', {}, false);
+  private async sendWakeDevice(): Promise<Message> {
+    return this.sendMessage({
+      type: 'WakeDeviceMessage',
+      body: {}
+    });
   }
 
-  private onReceiveMessage(message: Message) {
+  onReceiveMessage(message: Message) {
     if (message.type == Message.Type.SetStateMessage) {
       if (message.payload == null) {
         this.emit('nowPlaying', null);
@@ -248,6 +291,8 @@ export class TVClient extends AppleTV {
       if (message.payload.playbackQueue) {
         this.emit('playbackQueue', message.payload.playbackQueue);
       }
+    } else if (message.type == Message.Type.CryptoPairingMessage) {
+      this.pairingClient.handle(message);
     }
   }
 

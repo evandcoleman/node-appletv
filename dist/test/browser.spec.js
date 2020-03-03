@@ -23,7 +23,7 @@ describe('apple tv discovery', function () {
                 name: AppleTVName,
                 txtRecord: {
                     Name: AppleTVName,
-                    UniqueIdentifier: AppleTVIdentifier
+                    LocalAirPlayReceiverPairingIdentity: AppleTVIdentifier
                 }
             });
             ad.start();
@@ -31,7 +31,7 @@ describe('apple tv discovery', function () {
             let devices = yield browser.scan(AppleTVIdentifier);
             chai_1.expect(devices.length).to.be.greaterThan(0);
             let device = devices[0];
-            chai_1.expect(device.uid).to.equal(AppleTVIdentifier);
+            chai_1.expect(device.remoteUid).to.equal(AppleTVIdentifier);
             chai_1.expect(device.name).to.equal(AppleTVName);
             ad.stop();
         });

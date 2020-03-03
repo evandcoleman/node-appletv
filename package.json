@@ -39,10 +39,13 @@
     "mdns": "^2.5.1",
     "ora": "^2.1.0",
     "protobufjs": "^6.8.8",
+    "signale": "^1.4.0",
     "snake-case": "^2.1.0",
     "sodium": "^3.0.2",
+    "tweetnacl": "^1.0.3",
     "uuid": "^3.4.0",
-    "varint": "^5.0.0"
+    "varint": "^5.0.0",
+    "yaml": "^1.7.2"
   },
   "devDependencies": {
     "@types/chai": "^4.2.7",

@@ -3,6 +3,7 @@ let cli = caporal as any;
 
 import { AppleTV } from '../lib/appletv';
 import { TVClient } from '../lib/tvclient';
+import { TVServer } from '../lib/tvserver';
 import { Credentials } from '../lib/credentials';
 import { NowPlayingInfo } from '../lib/now-playing-info';
 import { Message } from '../lib/message';
@@ -14,7 +15,7 @@ import { promisify } from 'util';
 const project = require('../../package.json')
 
 async function openDevice(credentials: Credentials, logger: any): Promise<TVClient> {
-  let device = await scan(logger, null, credentials.uniqueIdentifier);
+  let device = await scan(logger, null, credentials.remoteUid);
   device.on('debug', (message: string) => {
     logger.debug(message);
   });
@@ -24,6 +25,30 @@ async function openDevice(credentials: Credentials, logger: any): Promise<TVClie
   });
   return await device.open(credentials);
 }
+
+cli
+  .version(project.version)
+  .command('serve', 'Host a fake Apple TV')
+  .option('--name <name>', 'The name of the Apple TV', cli.STRING) 
+  .option('--port <port>', 'The port to run on', cli.INTEGER) 
+  .option('--uid <uid>', 'The UUID of the advertised Apple TV', cli.STRING) 
+  .action(async (args, options, logger) => {
+    try {
+      let server = new TVServer(options.name || 'node-appletv', options.port || 49153, options.uid);
+      await server.start();
+      server.on('debug', (message: string) => {
+        logger.debug(message);
+      });
+      server.on('error', (error: Error) => {
+        logger.error(error.message);
+        logger.debug(error.stack);
+      });
+    } catch (error) {
+      logger.error(error.message);
+      logger.debug(error.stack);
+      process.exit();
+    }
+  });
 
 cli
   .version(project.version)

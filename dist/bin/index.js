@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const caporal = require("caporal");
 let cli = caporal;
 const appletv_1 = require("../lib/appletv");
+const tvserver_1 = require("../lib/tvserver");
 const credentials_1 = require("../lib/credentials");
 const scan_1 = require("./scan");
 const pair_1 = require("./pair");
@@ -20,7 +21,7 @@ const util_1 = require("util");
 const project = require('../../package.json');
 function openDevice(credentials, logger) {
     return __awaiter(this, void 0, void 0, function* () {
-        let device = yield scan_1.scan(logger, null, credentials.uniqueIdentifier);
+        let device = yield scan_1.scan(logger, null, credentials.remoteUid);
         device.on('debug', (message) => {
             logger.debug(message);
         });
@@ -31,6 +32,30 @@ function openDevice(credentials, logger) {
         return yield device.open(credentials);
     });
 }
+cli
+    .version(project.version)
+    .command('serve', 'Host a fake Apple TV')
+    .option('--name <name>', 'The name of the Apple TV', cli.STRING)
+    .option('--port <port>', 'The port to run on', cli.INTEGER)
+    .option('--uid <uid>', 'The UUID of the advertised Apple TV', cli.STRING)
+    .action((args, options, logger) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let server = new tvserver_1.TVServer(options.name || 'node-appletv', options.port || 49153, options.uid);
+        yield server.start();
+        server.on('debug', (message) => {
+            logger.debug(message);
+        });
+        server.on('error', (error) => {
+            logger.error(error.message);
+            logger.debug(error.stack);
+        });
+    }
+    catch (error) {
+        logger.error(error.message);
+        logger.debug(error.stack);
+        process.exit();
+    }
+}));
 cli
     .version(project.version)
     .command('pair', 'Pair with an Apple TV')

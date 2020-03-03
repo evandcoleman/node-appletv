@@ -1,10 +1,31 @@
 /// <reference types="node" />
-import { Message as ProtoMessage } from 'protobufjs';
+import { Type, Message as ProtoMessage } from 'protobufjs';
 import { EventEmitter } from 'events';
+import { Socket } from 'net';
 import { Credentials } from './credentials';
 import { NowPlayingInfo } from './now-playing-info';
 import { SupportedCommand } from './supported-command';
 import { Message } from './message';
+export interface SendProtocolMessageOptions {
+    message: ProtoMessage<{}>;
+    name?: string;
+    type?: number;
+    priority?: number;
+    identifier?: string;
+    waitForResponse?: boolean;
+    credentials: Credentials;
+    socket?: Socket;
+}
+export interface SendMessageOptions {
+    filename?: string;
+    type?: string;
+    waitForResponse?: boolean;
+    identifier?: string;
+    body?: any;
+    bodyBuilder?: (Type: any) => any;
+    priority?: number;
+    socket?: Socket;
+}
 export interface Size {
     width: number;
     height: number;
@@ -27,33 +48,27 @@ export declare class AppleTV extends EventEmitter {
     name: string;
     port: number;
     uid: string;
-    pairingId: string;
     credentials: Credentials;
+    ProtocolMessage: Type;
+    log: any;
     private callbacks;
-    private ProtocolMessage;
     private buffer;
-    constructor(name: string, port: number, uid: string);
-    /**
-    * Opens a connection to the AppleTV over the MRP protocol.
-    * @param credentials  The credentials object for this AppleTV
-    * @returns A promise that resolves to the AppleTV object.
-    */
-    open(credentials?: Credentials): Promise<this>;
+    constructor(name: string, port: number, uid?: string);
     /**
     * Closes the connection to the Apple TV.
     */
     close(): void;
-    write(data: Buffer): void;
     /**
     * Send a Protobuf message to the AppleTV. This is for advanced usage only.
     * @param definitionFilename  The Protobuf filename of the message type.
     * @param messageType  The name of the message.
     * @param body  The message body
     * @param waitForResponse  Whether or not to wait for a response before resolving the Promise.
+    * @param socket  The socket on which to send the message
     * @returns A promise that resolves to the response from the AppleTV.
     */
-    sendMessage(definitionFilename: string, messageType: string, body: {}, waitForResponse: boolean, priority?: number): Promise<Message>;
-    send(message: ProtoMessage<{}>, waitForResponse: boolean, priority: number, credentials?: Credentials): Promise<Message>;
+    sendMessage(options: SendMessageOptions): Promise<Message>;
+    send(options: SendProtocolMessageOptions): Promise<Message>;
     /**
     * Wait for a single message of a specified type.
     * @param type  The type of the message to wait for.
@@ -61,29 +76,30 @@ export declare class AppleTV extends EventEmitter {
     * @returns A promise that resolves to the Message.
     */
     messageOfType(type: Message.Type, timeout?: number): Promise<Message>;
-    waitForSequence(sequence: number, timeout?: number): Promise<Message>;
+    waitForSequence(sequence: number, state: number, socket: Socket, timeout?: number): Promise<Message>;
     /**
     * Call this method when a chunk of data is received.
     * @param data  A Buffer of data.
     * @returns A promise that resolves to the Message (if there is one).
     */
-    handleChunk(data: Buffer): Promise<Message>;
+    handleChunk(data: Buffer, socket: Socket, credentials?: Credentials): Promise<Message>;
+    write(data: Buffer, socket: Socket): void;
     private addCallback;
     private executeCallbacks;
-    private sendProtocolMessage;
-    sendIntroduction(): Promise<Message>;
+    sendProtocolMessage(options: SendProtocolMessageOptions): Promise<Message>;
+    sendIntroduction(socket: Socket, parameters: any, identifier?: string): Promise<Message>;
     private decodeMessage;
 }
 export declare module AppleTV {
     interface Events {
         connect: void;
-        nowPlaying: NowPlayingInfo;
-        supportedCommands: SupportedCommand[];
-        playbackQueue: any;
         message: Message;
         close: void;
         error: Error;
-        debug: string;
+        string: any;
+        nowPlaying: NowPlayingInfo;
+        supportedCommands: SupportedCommand[];
+        playbackQueue: any;
     }
 }
 export declare module AppleTV {

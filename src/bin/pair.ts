@@ -3,18 +3,15 @@ import * as caporal from 'caporal';
 import * as ora from 'ora';
 
 import { TVClient } from '../lib/tvclient';
-import { Pairing } from '../lib/pairing';
-import { Verifier } from '../lib/verifier';
+import { PairingClient } from '../lib/pairing';
 
 export function pair(device: TVClient, logger: Logger): Promise<TVClient> {
   let spinner = ora("Connecting to " + device.name).start()
   return device
     .open()
     .then(() => {
-      spinner.succeed().start('Initiating Pairing')
-      let pairing = new Pairing(device);
-      
-      return pairing.initiatePair()
+      spinner.succeed().start('Initiating Pairing')      
+      return device.pair()
         .then(callback => {
           spinner.succeed();
           return prompt([{

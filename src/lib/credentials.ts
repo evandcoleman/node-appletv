@@ -8,7 +8,7 @@ export class Credentials {
   private encryptCount: number = 0;
   private decryptCount: number = 0;
 
-  constructor(public uniqueIdentifier: string, public identifier: Buffer, public pairingId: string, public publicKey: Buffer, public encryptionKey: Buffer) {
+  constructor(public localUid: string, public remoteUid: string, public ltpk: Buffer, public ltsk: Buffer) {
     
   }
 
@@ -21,10 +21,9 @@ export class Credentials {
     let parts = text.split(':');
     return new Credentials(
       parts[0],
-      Buffer.from(parts[1], 'hex'),
-      Buffer.from(parts[2], 'hex').toString(),
-      Buffer.from(parts[3], 'hex'),
-      Buffer.from(parts[4], 'hex')
+      parts[1],
+      Buffer.from(parts[2], 'hex'),
+      Buffer.from(parts[3], 'hex')
     );
   }
 
@@ -33,15 +32,36 @@ export class Credentials {
   * @returns A string representation of a Credentials object.
   */
   toString(): string {
-    return this.uniqueIdentifier
+    return this.localUid.toLowerCase()
       + ":"
-      + this.identifier.toString('hex')
+      + this.remoteUid.toLowerCase()
       + ":"
-      + Buffer.from(this.pairingId).toString('hex')
+      + this.ltpk.toString('hex')
       + ":"
-      + this.publicKey.toString('hex')
-      + ":"
-      + this.encryptionKey.toString('hex');
+      + this.ltsk.toString('hex');
+  }
+
+  static fromJSON(json: any): Credentials {
+    return new Credentials(
+      json.localUid,
+      json.remoteUid,
+      Buffer.from(json.ltpk, 'hex'),
+      Buffer.from(json.ltsk, 'hex')
+    );
+  }
+
+  toJSON(extended: boolean = false): { [key: string]: string; } {
+    var out: any = {
+      localUid: this.localUid,
+      remoteUid: this.remoteUid,
+      ltpk: this.ltpk.toString('hex'),
+      ltsk: this.ltsk.toString('hex')
+    };
+    if (extended) {
+      out.readKey = this.readKey.toString('hex');
+      out.writeKey = this.writeKey.toString('hex');
+    }
+    return out;
   }
 
   encrypt(message: Buffer): Buffer {

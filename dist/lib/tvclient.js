@@ -15,17 +15,22 @@ const uuid_1 = require("uuid");
 const net_1 = require("net");
 const appletv_1 = require("./appletv");
 const pairing_1 = require("./pairing");
-const verifier_1 = require("./verifier");
 const now_playing_info_1 = require("./now-playing-info");
 const supported_command_1 = require("./supported-command");
 const message_1 = require("./message");
 const number_1 = require("./util/number");
 class TVClient extends appletv_1.AppleTV {
     constructor(service, socket) {
-        super(service.txtRecord.Name, service.port, service.txtRecord.UniqueIdentifier);
+        super(service.txtRecord.Name, service.port);
         this.service = service;
+        this.remoteUid = service.txtRecord.LocalAirPlayReceiverPairingIdentity;
         this.address = service.addresses.filter(x => x.includes('.'))[0];
         this.socket = socket || new net_1.Socket();
+        this.pairingClient = new pairing_1.PairingClient(this);
+        this.pairingClient.on('debug', ((message) => {
+            this.emit('debug', message);
+            this.emit('pairDebug', message);
+        }).bind(this));
         this.setupListeners();
     }
     /**
@@ -33,26 +38,45 @@ class TVClient extends appletv_1.AppleTV {
     * @returns A promise that resolves to the AppleTV object.
     */
     pair() {
-        let pairing = new pairing_1.Pairing(this);
-        return pairing.initiatePair();
-    }
-    open(credentials) {
-        const _super = Object.create(null, {
-            open: { get: () => super.open }
-        });
         return __awaiter(this, void 0, void 0, function* () {
-            yield _super.open.call(this, credentials);
-            yield this.openSocket();
-            yield this.sendIntroduction();
+            return this.pairingClient.pair();
+        });
+    }
+    /**
+    * Opens a connection to the AppleTV over the MRP protocol.
+    * @param credentials  The credentials object for this AppleTV
+    * @returns A promise that resolves to the AppleTV object.
+    */
+    open(credentials) {
+        return __awaiter(this, void 0, void 0, function* () {
             if (credentials) {
-                let verifier = new verifier_1.Verifier(this);
-                let keys = yield verifier.verify();
-                this.credentials.readKey = keys['readKey'];
-                this.credentials.writeKey = keys['writeKey'];
+                this.uid = credentials.localUid.toString();
+            }
+            this.credentials = credentials;
+            let root = yield protobufjs_1.load(path.resolve(__dirname + "/protos/ProtocolMessage.proto"));
+            this.ProtocolMessage = root.lookupType("ProtocolMessage");
+            yield this.openSocket();
+            yield this.sendIntroduction(this.socket, {
+                name: 'node-appletv',
+                localizedModelName: 'iPhone',
+                systemBuildVersion: '14G60',
+                applicationBundleIdentifier: 'com.apple.TVRemote',
+                applicationBundleVersion: '320.18',
+                protocolVersion: 1,
+                allowsPairing: true,
+                lastSupportedMessageType: 45,
+                supportsSystemPairing: true,
+            });
+            yield this.beginSession();
+            return this;
+        });
+    }
+    beginSession() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.credentials && !this.credentials.readKey) {
+                yield this.pairingClient.verify();
                 this.emit('debug', "DEBUG: Keys Read=" + this.credentials.readKey.toString('hex') + ", Write=" + this.credentials.writeKey.toString('hex'));
                 yield this.sendConnectionState();
-            }
-            if (credentials) {
                 yield this.sendClientUpdatesConfig({
                     nowPlayingUpdates: true,
                     artworkUpdates: true,
@@ -64,26 +88,25 @@ class TVClient extends appletv_1.AppleTV {
         });
     }
     openSocket() {
-        let that = this;
-        return new Promise((resolve, reject) => {
-            that.socket.connect(this.port, this.address, function () {
-                that.socket.on('data', (data) => __awaiter(this, void 0, void 0, function* () {
-                    try {
-                        yield that.handleChunk(data);
-                    }
-                    catch (error) {
-                        that.emit('error', error);
-                    }
-                }));
-                resolve();
+        return __awaiter(this, void 0, void 0, function* () {
+            let that = this;
+            return new Promise((resolve, reject) => {
+                that.socket.connect(this.port, this.address, function () {
+                    that.socket.on('data', (data) => __awaiter(this, void 0, void 0, function* () {
+                        try {
+                            yield that.handleChunk(data, that.socket, that.credentials);
+                        }
+                        catch (error) {
+                            that.emit('error', error);
+                        }
+                    }));
+                    resolve();
+                });
             });
         });
     }
     close() {
         this.socket.end();
-    }
-    write(data) {
-        this.socket.write(data);
     }
     /**
     * Requests the current playback queue from the Apple TV.
@@ -91,7 +114,9 @@ class TVClient extends appletv_1.AppleTV {
     * @returns A Promise that resolves to a NewPlayingInfo object.
     */
     requestPlaybackQueue(options) {
-        return this.requestPlaybackQueueWithWait(options, true);
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.requestPlaybackQueueWithWait(options, true);
+        });
     }
     /**
     * Requests the current artwork from the Apple TV.
@@ -125,95 +150,132 @@ class TVClient extends appletv_1.AppleTV {
     * @returns A promise that resolves to the AppleTV object after the message has been sent.
     */
     sendKeyCommand(key) {
-        switch (key) {
-            case appletv_1.AppleTV.Key.Up:
-                return this.sendKeyPressAndRelease(1, 0x8C);
-            case appletv_1.AppleTV.Key.Down:
-                return this.sendKeyPressAndRelease(1, 0x8D);
-            case appletv_1.AppleTV.Key.Left:
-                return this.sendKeyPressAndRelease(1, 0x8B);
-            case appletv_1.AppleTV.Key.Right:
-                return this.sendKeyPressAndRelease(1, 0x8A);
-            case appletv_1.AppleTV.Key.Menu:
-                return this.sendKeyPressAndRelease(1, 0x86);
-            case appletv_1.AppleTV.Key.Play:
-                return this.sendKeyPressAndRelease(12, 0xB0);
-            case appletv_1.AppleTV.Key.Pause:
-                return this.sendKeyPressAndRelease(12, 0xB1);
-            case appletv_1.AppleTV.Key.Next:
-                return this.sendKeyPressAndRelease(12, 0xB5);
-            case appletv_1.AppleTV.Key.Previous:
-                return this.sendKeyPressAndRelease(12, 0xB6);
-            case appletv_1.AppleTV.Key.Suspend:
-                return this.sendKeyPressAndRelease(1, 0x82);
-            case appletv_1.AppleTV.Key.Select:
-                return this.sendKeyPressAndRelease(1, 0x89);
-            case appletv_1.AppleTV.Key.Wake:
-                return this.sendKeyPressAndRelease(1, 0x83);
-            case appletv_1.AppleTV.Key.Home:
-                return this.sendKeyPressAndRelease(12, 0x40);
-            case appletv_1.AppleTV.Key.VolumeUp:
-                return this.sendKeyPressAndRelease(12, 0xE9);
-            case appletv_1.AppleTV.Key.VolumeDown:
-                return this.sendKeyPressAndRelease(12, 0xEA);
-        }
+        return __awaiter(this, void 0, void 0, function* () {
+            switch (key) {
+                case appletv_1.AppleTV.Key.Up:
+                    return this.sendKeyPressAndRelease(1, 0x8C);
+                case appletv_1.AppleTV.Key.Down:
+                    return this.sendKeyPressAndRelease(1, 0x8D);
+                case appletv_1.AppleTV.Key.Left:
+                    return this.sendKeyPressAndRelease(1, 0x8B);
+                case appletv_1.AppleTV.Key.Right:
+                    return this.sendKeyPressAndRelease(1, 0x8A);
+                case appletv_1.AppleTV.Key.Menu:
+                    return this.sendKeyPressAndRelease(1, 0x86);
+                case appletv_1.AppleTV.Key.Play:
+                    return this.sendKeyPressAndRelease(12, 0xB0);
+                case appletv_1.AppleTV.Key.Pause:
+                    return this.sendKeyPressAndRelease(12, 0xB1);
+                case appletv_1.AppleTV.Key.Next:
+                    return this.sendKeyPressAndRelease(12, 0xB5);
+                case appletv_1.AppleTV.Key.Previous:
+                    return this.sendKeyPressAndRelease(12, 0xB6);
+                case appletv_1.AppleTV.Key.Suspend:
+                    return this.sendKeyPressAndRelease(1, 0x82);
+                case appletv_1.AppleTV.Key.Select:
+                    return this.sendKeyPressAndRelease(1, 0x89);
+                case appletv_1.AppleTV.Key.Wake:
+                    return this.sendKeyPressAndRelease(1, 0x83);
+                case appletv_1.AppleTV.Key.Home:
+                    return this.sendKeyPressAndRelease(12, 0x40);
+                case appletv_1.AppleTV.Key.VolumeUp:
+                    return this.sendKeyPressAndRelease(12, 0xE9);
+                case appletv_1.AppleTV.Key.VolumeDown:
+                    return this.sendKeyPressAndRelease(12, 0xEA);
+            }
+        });
+    }
+    sendMessage(options) {
+        const _super = Object.create(null, {
+            sendMessage: { get: () => super.sendMessage }
+        });
+        return __awaiter(this, void 0, void 0, function* () {
+            options.socket = this.socket;
+            return _super.sendMessage.call(this, options);
+        });
+    }
+    send(options) {
+        const _super = Object.create(null, {
+            send: { get: () => super.send }
+        });
+        return __awaiter(this, void 0, void 0, function* () {
+            options.socket = this.socket;
+            return _super.send.call(this, options);
+        });
     }
     sendKeyPressAndRelease(usePage, usage) {
-        let that = this;
-        return this.sendKeyPress(usePage, usage, true)
-            .then(() => {
-            return that.sendKeyPress(usePage, usage, false);
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.sendKeyPress(usePage, usage, true);
+            return this.sendKeyPress(usePage, usage, false);
         });
     }
     sendKeyPress(usePage, usage, down) {
-        let time = Buffer.from('438922cf08020000', 'hex');
-        let data = Buffer.concat([
-            number_1.default.UInt16toBufferBE(usePage),
-            number_1.default.UInt16toBufferBE(usage),
-            down ? number_1.default.UInt16toBufferBE(1) : number_1.default.UInt16toBufferBE(0)
-        ]);
-        let body = {
-            hidEventData: Buffer.concat([
-                time,
-                Buffer.from('00000000000000000100000000000000020' + '00000200000000300000001000000000000', 'hex'),
-                data,
-                Buffer.from('0000000000000001000000', 'hex')
-            ])
-        };
-        let that = this;
-        return this.sendMessage("SendHIDEventMessage", "SendHIDEventMessage", body, false)
-            .then(() => {
-            return that;
+        return __awaiter(this, void 0, void 0, function* () {
+            let time = Buffer.from('438922cf08020000', 'hex');
+            let data = Buffer.concat([
+                number_1.default.UInt16toBufferBE(usePage),
+                number_1.default.UInt16toBufferBE(usage),
+                down ? number_1.default.UInt16toBufferBE(1) : number_1.default.UInt16toBufferBE(0)
+            ]);
+            let body = {
+                hidEventData: Buffer.concat([
+                    time,
+                    Buffer.from('00000000000000000100000000000000020' + '00000200000000300000001000000000000', 'hex'),
+                    data,
+                    Buffer.from('0000000000000001000000', 'hex')
+                ])
+            };
+            yield this.sendMessage({
+                type: 'SendHIDEventMessage',
+                body: body
+            });
+            return this;
         });
     }
     requestPlaybackQueueWithWait(options, waitForResponse) {
-        var params = options;
-        params.requestID = uuid_1.v4();
-        if (options.artworkSize) {
-            params.artworkWidth = options.artworkSize.width;
-            params.artworkHeight = options.artworkSize.height;
-            delete params.artworkSize;
-        }
-        return this.sendMessage("PlaybackQueueRequestMessage", "PlaybackQueueRequestMessage", params, waitForResponse);
+        return __awaiter(this, void 0, void 0, function* () {
+            var params = options;
+            params.requestID = uuid_1.v4();
+            if (options.artworkSize) {
+                params.artworkWidth = options.artworkSize.width;
+                params.artworkHeight = options.artworkSize.height;
+                delete params.artworkSize;
+            }
+            return this.sendMessage({
+                type: 'PlaybackQueueRequestMessage',
+                body: params,
+                waitForResponse: waitForResponse
+            });
+        });
     }
     sendConnectionState() {
-        let that = this;
-        return protobufjs_1.load(path.resolve(__dirname + "/protos/SetConnectionStateMessage.proto"))
-            .then(root => {
-            let type = root.lookupType('SetConnectionStateMessage');
-            let stateEnum = type.lookupEnum('ConnectionState');
-            let message = type.create({
-                state: stateEnum.values['Connected']
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.sendMessage({
+                type: 'SetConnectionStateMessage',
+                bodyBuilder: (type) => {
+                    let stateEnum = type.lookupEnum('ConnectionState');
+                    return {
+                        state: stateEnum.values['Connected']
+                    };
+                }
             });
-            return this
-                .send(message, false, 0, that.credentials);
         });
     }
     sendClientUpdatesConfig(config) {
-        return this.sendMessage('ClientUpdatesConfigMessage', 'ClientUpdatesConfigMessage', config, false);
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.sendMessage({
+                type: 'ClientUpdatesConfigMessage',
+                body: config
+            });
+        });
     }
     sendWakeDevice() {
-        return this.sendMessage('WakeDeviceMessage', 'WakeDeviceMessage', {}, false);
+        return __awaiter(this, void 0, void 0, function* () {
+            return this.sendMessage({
+                type: 'WakeDeviceMessage',
+                body: {}
+            });
+        });
     }
     onReceiveMessage(message) {
         if (message.type == message_1.Message.Type.SetStateMessage) {
@@ -235,6 +297,9 @@ class TVClient extends appletv_1.AppleTV {
             if (message.payload.playbackQueue) {
                 this.emit('playbackQueue', message.payload.playbackQueue);
             }
+        }
+        else if (message.type == message_1.Message.Type.CryptoPairingMessage) {
+            this.pairingClient.handle(message);
         }
     }
     setupListeners() {

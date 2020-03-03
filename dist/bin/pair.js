@@ -2,15 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const inquirer_1 = require("inquirer");
 const ora = require("ora");
-const pairing_1 = require("../lib/pairing");
 function pair(device, logger) {
     let spinner = ora("Connecting to " + device.name).start();
     return device
         .open()
         .then(() => {
         spinner.succeed().start('Initiating Pairing');
-        let pairing = new pairing_1.Pairing(device);
-        return pairing.initiatePair()
+        return device.pair()
             .then(callback => {
             spinner.succeed();
             return inquirer_1.prompt([{

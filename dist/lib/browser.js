@@ -18,7 +18,7 @@ class Browser {
         let that = this;
         this.browser.on('serviceUp', function (service) {
             let device = new tvclient_1.TVClient(service);
-            if (that.uniqueIdentifier && device.uid == that.uniqueIdentifier) {
+            if (that.uniqueIdentifier && device.remoteUid == that.uniqueIdentifier) {
                 that.browser.stop();
                 that.onComplete([device]);
             }

@@ -5,17 +5,29 @@ export class Message {
   public identifier: string;
   public payload: any;
 
+  private typeName: string;
+
   constructor(private message: ProtoMessage<{}>) {
     this.type = message['type'];
     this.identifier = message['identifier'];
     let keys = Object.keys(message.toJSON()).filter(key => { return key[0] == "."; });
     if (keys.length > 0) {
+      let key = keys[0].slice(1);
+      this.typeName = key.charAt(0).toUpperCase() + key.slice(1);
       this.payload = message[keys[0]];
     }
   }
 
   toObject(): any {
     return this.message;
+  }
+
+  toString(): string {
+    return JSON.stringify({
+      type: this.typeName,
+      identifier: this.identifier,
+      payload: this.payload
+    }, null, 2);
   }
 }
 
