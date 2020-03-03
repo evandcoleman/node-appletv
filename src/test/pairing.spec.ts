@@ -7,7 +7,7 @@ import { Socket, Server } from 'net';
 import { v4 as uuid } from 'uuid';
 import * as mdns from 'mdns';
 import * as sinon from 'sinon';
-import * as ed25519 from 'ed25519';
+import * as tweetnacl from 'tweetnacl';
 import * as crypto from 'crypto';
 import { expect } from 'chai';
 import 'mocha';
@@ -38,11 +38,10 @@ describe('apple tv pairing', function() {
     }, socket);
     tvclient.uid = 'client';
 
-    let seed: Buffer = crypto.randomBytes(32);
-    let { publicKey, privateKey } = ed25519.MakeKeypair(seed);
+    let { publicKey, secretKey } = tweetnacl.sign.keyPair();
     let keyPair = {
-      signPk: publicKey,
-      signSk: privateKey
+      signPk: Buffer.from(publicKey),
+      signSk: Buffer.from(secretKey)
     };
     server = new PairingServer(tvserver, keyPair, {
       uid: tvclient.uid,

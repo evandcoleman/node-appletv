@@ -14,7 +14,7 @@ const fs = require("fs");
 const YAML = require("yaml");
 const os = require("os");
 const crypto = require("crypto");
-const ed25519 = require("ed25519");
+const tweetnacl = require("tweetnacl");
 const credentials_1 = require("./credentials");
 class CredentialsStore {
     constructor(identifier) {
@@ -57,7 +57,7 @@ class CredentialsStore {
     }
     load() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.isLoaded)
+            if (this.isLoaded || process.env.IS_CI)
                 return;
             try {
                 let contents = yield fs.promises.readFile(this.storePath, 'utf8');
@@ -72,22 +72,24 @@ class CredentialsStore {
             }
             if (!this.store.signPk) {
                 let seed = crypto.randomBytes(32);
-                let keyPair = ed25519.MakeKeypair(seed);
-                this.store.signPk = keyPair.publicKey.toString('hex');
-                this.store.signSk = keyPair.privateKey.toString('hex');
+                let { publicKey, secretKey } = tweetnacl.sign.keyPair();
+                this.store.signPk = Buffer.from(publicKey).toString('hex');
+                this.store.signSk = Buffer.from(secretKey).toString('hex');
             }
             this.isLoaded = true;
         });
     }
     save() {
         return __awaiter(this, void 0, void 0, function* () {
+            if (process.env.IS_CI)
+                return;
             let contents = YAML.stringify(this.store);
             yield fs.promises.writeFile(this.storePath, contents, 'utf8');
         });
     }
     create() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (this.isCreated)
+            if (this.isCreated || process.env.IS_CI)
                 return;
             try {
                 let stats = yield fs.promises.stat(this.storeDirectory);

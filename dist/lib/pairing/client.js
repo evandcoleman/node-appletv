@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const events_1 = require("events");
-const ed25519 = require("ed25519");
+const tweetnacl = require("tweetnacl");
 const srp_1 = require("./srp");
 const credentials_1 = require("../credentials");
 const tlv_1 = require("../util/tlv");
@@ -259,7 +259,7 @@ class PairingClient extends events_1.EventEmitter {
                 throw new Error(`Identifier mismatch. Expected ${this.device.credentials.remoteUid} but got ${identifier.toString()}`);
             }
             let deviceInfo = Buffer.concat([publicKey, Buffer.from(identifier), this.session.publicKey]);
-            if (!ed25519.Verify(deviceInfo, signature, this.device.credentials.ltpk)) {
+            if (!tweetnacl.sign.detached.verify(deviceInfo, signature, this.device.credentials.ltpk)) {
                 throw new Error("Signature verification failed");
             }
         });

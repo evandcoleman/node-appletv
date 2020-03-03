@@ -1,67 +1,110 @@
-import { api as Sodium } from 'sodium';
+import * as chacha20 from './chacha20poly1305';
 import * as crypto from 'crypto';
 
 import number from './number';
 
-function computePoly1305(cipherText: Buffer, AAD: Buffer, nonce: Buffer, key: Buffer): Buffer {
-    if (AAD == null) {
-        AAD = Buffer.alloc(0);
-    }
-
-    const msg =
-        Buffer.concat([
-            AAD,
-            getPadding(AAD, 16),
-            cipherText,
-            getPadding(cipherText, 16),
-            number.UInt53toBufferLE(AAD.length),
-            number.UInt53toBufferLE(cipherText.length)
-        ])
-
-    const polyKey = Sodium.crypto_stream_chacha20(32, nonce, key);
-    const computed_hmac = Sodium.crypto_onetimeauth(msg, polyKey);
-    polyKey.fill(0);
-
-    return computed_hmac;
-}
-
 // i'd really prefer for this to be a direct call to
-// Sodium.crypto_aead_chacha20poly1305_decrypt()
+// Sodium.crypto_aead_chacha20_decrypt()
 // but unfortunately the way it constructs the message to
 // calculate the HMAC is not compatible with homekit
 // (long story short, it uses [ AAD, AAD.length, CipherText, CipherText.length ]
 // whereas homekit expects [ AAD, CipherText, AAD.length, CipherText.length ]
 function verifyAndDecrypt(cipherText: Buffer, mac: Buffer, AAD: Buffer, nonce: Buffer, key: Buffer): Buffer {
-    const matches =
-        Sodium.crypto_verify_16(
-            mac,
-            computePoly1305(cipherText, AAD, nonce, key)
-        );
+    let addData: Buffer | null | undefined = AAD;
+    let plainText: Buffer = Buffer.alloc(cipherText.length);
 
-    if (matches === 0) {
-        return Sodium
-            .crypto_stream_chacha20_xor_ic(cipherText, nonce, 1, key);
+    let ctx = new chacha20.Chacha20Ctx();
+    chacha20.chacha20_keysetup(ctx, key);
+    chacha20.chacha20_ivsetup(ctx, nonce);
+    let poly1305key = Buffer.alloc(64);
+    let zeros = Buffer.alloc(64);
+    chacha20.chacha20_update(ctx, poly1305key, zeros, zeros.length);
+
+    let poly1305Contxt = new chacha20.Poly1305Ctx();
+    chacha20.poly1305_init(poly1305Contxt, poly1305key);
+
+    let addDataLength = 0;
+    if (addData !== undefined && addData !== null) {
+      addDataLength = addData.length;
+      chacha20.poly1305_update(poly1305Contxt, addData, addData.length);
+      if ((addData.length % 16) != 0) {
+          chacha20.poly1305_update(poly1305Contxt, Buffer.alloc(16 - (addData.length % 16)), 16 - (addData.length % 16));
+      }
     }
 
-    return null;
+    chacha20.poly1305_update(poly1305Contxt, cipherText, cipherText.length);
+    if ((cipherText.length % 16) != 0) {
+        chacha20.poly1305_update(poly1305Contxt, Buffer.alloc(16 - (cipherText.length % 16)), 16 - (cipherText.length % 16));
+    }
+
+    let leAddDataLen = Buffer.alloc(8);
+    number.writeUInt64LE(addDataLength, leAddDataLen, 0);
+    chacha20.poly1305_update(poly1305Contxt, leAddDataLen, 8);
+
+    let leTextDataLen = Buffer.alloc(8);
+    number.writeUInt64LE(cipherText.length, leTextDataLen, 0);
+    chacha20.poly1305_update(poly1305Contxt, leTextDataLen, 8);
+
+    let polyOut = [] as unknown as Uint8Array;
+    chacha20.poly1305_finish(poly1305Contxt, polyOut);
+
+    if (chacha20.poly1305_verify(mac, polyOut) != 1) {
+      throw new Error(`Verification failed`);
+
+      return null;
+    } else {
+      let written = chacha20.chacha20_update(ctx, plainText, cipherText, cipherText.length);
+      chacha20.chacha20_final(ctx, plainText.slice(written, cipherText.length));
+
+      return plainText;
+    }
 }
 
 // See above about calling directly into libsodium.
 function encryptAndSeal(plainText: Buffer, AAD: Buffer, nonce: Buffer, key: Buffer): Buffer[] {
-    const cipherText =
-        Sodium
-            .crypto_stream_chacha20_xor_ic(plainText, nonce, 1, key);
+  let plaintext: Buffer = plainText;
+  let addData: Buffer | null | undefined = AAD;
+  let ciphertext: Buffer = Buffer.alloc(plaintext.length);
+  let mac: Buffer = Buffer.alloc(16);
 
-    const hmac =
-        computePoly1305(cipherText, AAD, nonce, key);
+  let ctx = new chacha20.Chacha20Ctx();
+  chacha20.chacha20_keysetup(ctx, key);
+  chacha20.chacha20_ivsetup(ctx, nonce);
+  let poly1305key = Buffer.alloc(64);
+  let zeros = Buffer.alloc(64);
+  chacha20.chacha20_update(ctx,poly1305key,zeros,zeros.length);
 
-    return [ cipherText, hmac ];
-}
+  let written = chacha20.chacha20_update(ctx,ciphertext,plaintext,plaintext.length);
+  chacha20.chacha20_final(ctx,ciphertext.slice(written,plaintext.length));
 
-function getPadding(buffer, blockSize) {
-    return buffer.length % blockSize === 0
-        ? Buffer.alloc(0)
-        : Buffer.alloc(blockSize - (buffer.length % blockSize))
+  let poly1305Context = new chacha20.Poly1305Ctx();
+  chacha20.poly1305_init(poly1305Context, poly1305key);
+
+  let addDataLength = 0;
+  if (addData != undefined) {
+    addDataLength = addData.length;
+    chacha20.poly1305_update(poly1305Context, addData, addData.length);
+    if ((addData.length % 16) != 0) {
+      chacha20.poly1305_update(poly1305Context, Buffer.alloc(16 - (addData.length % 16)), 16 - (addData.length % 16));
+    }
+  }
+
+  chacha20.poly1305_update(poly1305Context, ciphertext, ciphertext.length);
+  if ((ciphertext.length % 16) != 0) {
+      chacha20.poly1305_update(poly1305Context, Buffer.alloc(16 - (ciphertext.length % 16)), 16 - (ciphertext.length % 16));
+  }
+
+  const leAddDataLen = Buffer.alloc(8);
+  number.writeUInt64LE(addDataLength, leAddDataLen, 0);
+  chacha20.poly1305_update(poly1305Context, leAddDataLen, 8);
+
+  const leTextDataLen = Buffer.alloc(8);
+  number.writeUInt64LE(ciphertext.length, leTextDataLen, 0);
+  chacha20.poly1305_update(poly1305Context, leTextDataLen, 8);
+
+  chacha20.poly1305_finish(poly1305Context, mac);
+
+  return [ciphertext, mac];
 }
 
 function HKDF(hashAlg: string, salt: Buffer, ikm: Buffer, info: Buffer, size: number): Buffer {

@@ -2,7 +2,7 @@ import { v4 as uuid } from 'uuid';
 import { load } from 'protobufjs';
 import { EventEmitter } from 'events';
 import * as path from 'path';
-import * as ed25519 from 'ed25519';
+import * as tweetnacl from 'tweetnacl';
 
 import { TVClient } from '../tvclient';
 import { SRPClientAuth, SRPClientSession } from './srp';
@@ -300,7 +300,7 @@ export class PairingClient extends EventEmitter {
     }
 
     let deviceInfo = Buffer.concat([publicKey, Buffer.from(identifier), this.session.publicKey]);
-    if (!ed25519.Verify(deviceInfo, signature, this.device.credentials.ltpk)) {
+    if (!tweetnacl.sign.detached.verify(deviceInfo, signature, this.device.credentials.ltpk)) {
       throw new Error("Signature verification failed");
     }
   }

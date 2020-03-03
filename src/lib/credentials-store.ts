@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as YAML from 'yaml';
 import * as os from 'os';
 import * as crypto from 'crypto';
-import * as ed25519 from 'ed25519';
+import * as tweetnacl from 'tweetnacl';
 
 import { Credentials } from './credentials';
 
@@ -78,9 +78,9 @@ export class CredentialsStore {
     }
     if (!this.store.signPk) {
       let seed = crypto.randomBytes(32);
-      let keyPair = ed25519.MakeKeypair(seed);
-      this.store.signPk = keyPair.publicKey.toString('hex');
-      this.store.signSk = keyPair.privateKey.toString('hex');
+      let { publicKey, secretKey } = tweetnacl.sign.keyPair();
+      this.store.signPk = Buffer.from(publicKey).toString('hex');
+      this.store.signSk = Buffer.from(secretKey).toString('hex');
     }
     this.isLoaded = true;
   }

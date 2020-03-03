@@ -15,8 +15,7 @@ const tvclient_1 = require("../lib/tvclient");
 const message_1 = require("../lib/message");
 const net_1 = require("net");
 const sinon = require("sinon");
-const ed25519 = require("ed25519");
-const crypto = require("crypto");
+const tweetnacl = require("tweetnacl");
 const chai_1 = require("chai");
 require("mocha");
 describe('apple tv pairing', function () {
@@ -43,11 +42,10 @@ describe('apple tv pairing', function () {
                 }
             }, socket);
             tvclient.uid = 'client';
-            let seed = crypto.randomBytes(32);
-            let { publicKey, privateKey } = ed25519.MakeKeypair(seed);
+            let { publicKey, secretKey } = tweetnacl.sign.keyPair();
             let keyPair = {
-                signPk: publicKey,
-                signSk: privateKey
+                signPk: Buffer.from(publicKey),
+                signSk: Buffer.from(secretKey)
             };
             server = new pairing_1.PairingServer(tvserver, keyPair, {
                 uid: tvclient.uid,

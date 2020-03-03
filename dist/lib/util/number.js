@@ -13,9 +13,9 @@ const assert = require("assert");
  *  * renamed uintHighLow to be more clear about what it does
  *  * Refactored to return a buffer rather write into a passed-in buffer
  */
+const MAX_UINT32 = 0x00000000FFFFFFFF;
+const MAX_INT53 = 0x001FFFFFFFFFFFFF;
 function splitUInt53(number) {
-    const MAX_UINT32 = 0x00000000FFFFFFFF;
-    const MAX_INT53 = 0x001FFFFFFFFFFFFF;
     assert(number > -1 && number <= MAX_INT53, "number out of range");
     assert(Math.floor(number) === number, "number must be an integer");
     var high = 0;
@@ -38,7 +38,25 @@ function UInt16toBufferBE(number) {
     buf.writeUInt16BE(number, 0);
     return buf;
 }
+function uintHighLow(number) {
+    assert(number > -1 && number <= MAX_INT53, 'number out of range');
+    assert(Math.floor(number) === number, 'number must be an integer');
+    let high = 0;
+    const signbit = number & 0xFFFFFFFF;
+    const low = signbit < 0 ? (number & 0x7FFFFFFF) + 0x80000000 : signbit;
+    if (number > MAX_UINT32) {
+        high = (number - low) / (MAX_UINT32 + 1);
+    }
+    return [high, low];
+}
+function writeUInt64LE(number, buffer, offset = 0) {
+    const hl = uintHighLow(number);
+    buffer.writeUInt32LE(hl[1], offset);
+    buffer.writeUInt32LE(hl[0], offset + 4);
+}
 exports.default = {
     UInt53toBufferLE,
-    UInt16toBufferBE
+    UInt16toBufferBE,
+    uintHighLow,
+    writeUInt64LE
 };

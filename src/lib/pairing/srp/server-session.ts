@@ -1,7 +1,5 @@
 import * as srp from 'fast-srp-hap';
 import * as crypto from 'crypto';
-// import * as ed25519 from 'ed25519';
-// import * as curve25519 from 'curve25519-n2';
 import * as tweetnacl from 'tweetnacl';
 
 import { SRPBase } from './base';

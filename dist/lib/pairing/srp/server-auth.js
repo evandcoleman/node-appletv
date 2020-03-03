@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const srp = require("fast-srp-hap");
 const crypto = require("crypto");
-const ed25519 = require("ed25519");
+const tweetnacl = require("tweetnacl");
 const base_1 = require("./base");
 const encryption_1 = require("../../util/encryption");
 class SRPServerAuth extends base_1.SRPBase {
@@ -44,7 +44,7 @@ class SRPServerAuth extends base_1.SRPBase {
             Buffer.from(this.pairingId),
             this.publicKey,
         ]);
-        this.signature = ed25519.Sign(serverInfo, this.keyPair.signSk);
+        this.signature = Buffer.from(tweetnacl.sign.detached(serverInfo, this.keyPair.signSk));
     }
 }
 exports.SRPServerAuth = SRPServerAuth;

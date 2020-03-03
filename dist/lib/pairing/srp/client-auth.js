@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const srp = require("fast-srp-hap");
 const crypto = require("crypto");
-const ed25519 = require("ed25519");
+const tweetnacl = require("tweetnacl");
 const base_1 = require("./base");
 const encryption_1 = require("../../util/encryption");
 class SRPClientAuth extends base_1.SRPBase {
@@ -35,12 +35,12 @@ class SRPClientAuth extends base_1.SRPBase {
     generateSignature() {
         if (this.signature)
             return;
-        let { publicKey, privateKey } = ed25519.MakeKeypair(this.seed);
-        this.publicKey = publicKey;
+        let { publicKey, secretKey } = tweetnacl.sign.keyPair();
+        this.publicKey = Buffer.from(publicKey);
         this.sharedSecret = this.srp.computeK();
         let deviceHash = encryption_1.default.HKDF("sha512", Buffer.from("Pair-Setup-Controller-Sign-Salt"), this.sharedSecret, Buffer.from("Pair-Setup-Controller-Sign-Info"), 32);
-        let deviceInfo = Buffer.concat([deviceHash, Buffer.from(this.pairingId), publicKey]);
-        this.signature = ed25519.Sign(deviceInfo, privateKey);
+        let deviceInfo = Buffer.concat([deviceHash, Buffer.from(this.pairingId), Buffer.from(publicKey)]);
+        this.signature = Buffer.from(tweetnacl.sign.detached(deviceInfo, Buffer.from(secretKey)));
     }
 }
 exports.SRPClientAuth = SRPClientAuth;

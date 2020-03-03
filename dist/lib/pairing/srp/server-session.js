@@ -1,8 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const crypto = require("crypto");
-// import * as ed25519 from 'ed25519';
-// import * as curve25519 from 'curve25519-n2';
 const tweetnacl = require("tweetnacl");
 const base_1 = require("./base");
 const encryption_1 = require("../../util/encryption");

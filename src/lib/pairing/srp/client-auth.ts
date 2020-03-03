@@ -1,7 +1,6 @@
 import * as srp from 'fast-srp-hap';
 import * as crypto from 'crypto';
-import * as ed25519 from 'ed25519';
-import * as curve25519 from 'curve25519-n2';
+import * as tweetnacl from 'tweetnacl';
 
 import { SRPBase } from './base';
 import enc from '../../util/encryption';
@@ -64,8 +63,8 @@ export class SRPClientAuth extends SRPBase {
   private generateSignature() {
     if (this.signature) return;
 
-    let { publicKey, privateKey } = ed25519.MakeKeypair(this.seed);
-    this.publicKey = publicKey;
+    let { publicKey, secretKey } = tweetnacl.sign.keyPair();
+    this.publicKey = Buffer.from(publicKey);
     this.sharedSecret = this.srp.computeK();
     let deviceHash = enc.HKDF(
       "sha512",
@@ -74,7 +73,7 @@ export class SRPClientAuth extends SRPBase {
       Buffer.from("Pair-Setup-Controller-Sign-Info"),
       32
     );
-    let deviceInfo = Buffer.concat([deviceHash, Buffer.from(this.pairingId), publicKey]);
-    this.signature = ed25519.Sign(deviceInfo, privateKey);
+    let deviceInfo = Buffer.concat([deviceHash, Buffer.from(this.pairingId), Buffer.from(publicKey)]);
+    this.signature = Buffer.from(tweetnacl.sign.detached(deviceInfo, Buffer.from(secretKey)));
   }
 }
