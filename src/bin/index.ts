@@ -36,6 +36,10 @@ cli
     try {
       let server = new TVServer(options.name || 'node-appletv', options.port || 49153, options.uid);
       await server.start();
+      logger.info(`Started server ${server.name} (${server.uid}) on port ${server.port}`);
+      server.on('code', (name: string, code: string) => {
+        logger.info(`Pairing code for ${name} is ${code}`);
+      });
       server.on('debug', (message: string) => {
         logger.debug(message);
       });

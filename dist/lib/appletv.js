@@ -67,7 +67,7 @@ class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
                 waitForResponse: options.waitForResponse,
                 identifier: options.identifier,
                 priority: options.priority,
-                credentials: this.credentials,
+                credentials: options.credentials,
                 socket: options.socket
             });
         });
@@ -272,7 +272,7 @@ class AppleTV extends events_1.EventEmitter /* <AppleTV.Events> */ {
             let preMessage = ProtocolMessage.decode(data);
             let type = preMessage.toJSON().type;
             if (type == null) {
-                console.warn(`Missing message type: ${preMessage}`);
+                console.warn(`Missing message type: ${JSON.stringify(preMessage, null, 2)}`);
                 return preMessage;
             }
             let name = type[0].toUpperCase() + camelcase(type).substring(1);

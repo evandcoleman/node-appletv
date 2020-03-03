@@ -18,6 +18,7 @@ export class TVClient extends AppleTV {
   public address: string;
   public socket: Socket;
   public remoteUid: string;
+  public credentials: Credentials;
 
   private pairingClient: PairingClient;
 
@@ -192,11 +193,13 @@ export class TVClient extends AppleTV {
 
   async sendMessage(options: SendMessageOptions): Promise<Message> {
     options.socket = this.socket;
+    options.credentials = this.credentials;
     return super.sendMessage(options);
   }
 
   async send(options: SendProtocolMessageOptions): Promise<Message> {
     options.socket = this.socket;
+    options.credentials = this.credentials;
     return super.send(options);
   }
 

@@ -110,7 +110,7 @@ export class PairingServer extends EventEmitter {
   }
 
   private async pairSetupM2(): Promise<void> {
-    this.emit('debug', `Code for '${this.client.name}' is ${this.code}`);
+    this.device.emit('code', this.client.name, this.code);
 
     let encoded = tlv.encode(
       tlv.Tag.Salt, this.srp.salt,

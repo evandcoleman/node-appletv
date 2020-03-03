@@ -191,6 +191,7 @@ class TVClient extends appletv_1.AppleTV {
         });
         return __awaiter(this, void 0, void 0, function* () {
             options.socket = this.socket;
+            options.credentials = this.credentials;
             return _super.sendMessage.call(this, options);
         });
     }
@@ -200,6 +201,7 @@ class TVClient extends appletv_1.AppleTV {
         });
         return __awaiter(this, void 0, void 0, function* () {
             options.socket = this.socket;
+            options.credentials = this.credentials;
             return _super.send.call(this, options);
         });
     }

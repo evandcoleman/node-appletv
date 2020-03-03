@@ -25,6 +25,7 @@ export interface SendMessageOptions {
     bodyBuilder?: (Type: any) => any;
     priority?: number;
     socket?: Socket;
+    credentials?: Credentials;
 }
 export interface Size {
     width: number;
@@ -48,7 +49,6 @@ export declare class AppleTV extends EventEmitter {
     name: string;
     port: number;
     uid: string;
-    credentials: Credentials;
     ProtocolMessage: Type;
     log: any;
     private callbacks;

@@ -1,0 +1,11 @@
+syntax = "proto2";
+
+import "ProtocolMessage.proto";
+
+extend ProtocolMessage {
+  optional SetDisconnectingStateMessage setDisconnectingStateMessage = 21;
+}
+
+message SetDisconnectingStateMessage {
+  
+}

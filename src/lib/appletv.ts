@@ -47,6 +47,7 @@ export interface SendMessageOptions {
   bodyBuilder?: (Type) => any;
   priority?: number;
   socket?: Socket;
+  credentials?: Credentials;
 }
 
 export interface Size {
@@ -72,7 +73,6 @@ export interface ClientUpdatesConfig {
 
 export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
   public uid: string;
-  public credentials: Credentials;
   public ProtocolMessage: Type;
 
   public log: any;
@@ -125,7 +125,7 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
       waitForResponse: options.waitForResponse,
       identifier: options.identifier,
       priority: options.priority,
-      credentials: this.credentials,
+      credentials: options.credentials,
       socket: options.socket
     });
   }
@@ -341,7 +341,7 @@ export class AppleTV extends EventEmitter /* <AppleTV.Events> */ {
     let type = preMessage.toJSON().type;
 
     if (type == null) {
-      console.warn(`Missing message type: ${preMessage}`);
+      console.warn(`Missing message type: ${JSON.stringify(preMessage, null, 2)}`);
       return preMessage;
     }
 

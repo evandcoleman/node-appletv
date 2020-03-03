@@ -10,6 +10,7 @@ export declare class TVClient extends AppleTV {
     address: string;
     socket: Socket;
     remoteUid: string;
+    credentials: Credentials;
     private pairingClient;
     constructor(service: Service, socket?: Socket);
     /**

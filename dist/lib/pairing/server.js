@@ -100,7 +100,7 @@ class PairingServer extends events_1.EventEmitter {
     }
     pairSetupM2() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.emit('debug', `Code for '${this.client.name}' is ${this.code}`);
+            this.device.emit('code', this.client.name, this.code);
             let encoded = tlv_1.default.encode(tlv_1.default.Tag.Salt, this.srp.salt, tlv_1.default.Tag.PublicKey, this.srp.sessionPublicKey, tlv_1.default.Tag.Sequence, types_1.PairSetupState.M2);
             this.emit('debug', `[Server] >>>> Sending Setup M2 Payload`);
             yield this.device.sendMessage({
