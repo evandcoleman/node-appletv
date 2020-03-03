@@ -41,6 +41,8 @@ jobs:
     - run: npm run build --if-present
     - run: npm run coverage
       name: Run tests
+      env:
+        IS_CI: true
     - run: |
         ./coverage/cc-test-reporter format-coverage -t lcov -o ./coverage/coverage.json ./coverage/lcov.info
         ./coverage/cc-test-reporter upload-coverage -i ./coverage/coverage.json

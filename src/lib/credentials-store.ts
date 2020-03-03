@@ -64,7 +64,7 @@ export class CredentialsStore {
   }
 
   private async load() {
-    if (this.isLoaded) return;
+    if (this.isLoaded || process.env.IS_CI) return;
 
     try {
       let contents = await fs.promises.readFile(this.storePath, 'utf8');
@@ -86,13 +86,15 @@ export class CredentialsStore {
   }
 
   private async save() {
+    if (process.env.IS_CI) return;
+
     let contents = YAML.stringify(this.store);
 
     await fs.promises.writeFile(this.storePath, contents, 'utf8');
   }
 
   private async create() {
-    if (this.isCreated) return;
+    if (this.isCreated || process.env.IS_CI) return;
 
     try {
       let stats = await fs.promises.stat(this.storeDirectory);
