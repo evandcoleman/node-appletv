@@ -2,6 +2,15 @@
 
 ## Next Version
 
+#### Added
+
+* Added server component
+
+#### Internal
+
+* Use only native encryption libraries
+* Refactor client
+
 ## 1.1.0
 
 #### Added
